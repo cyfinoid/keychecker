@@ -3,18 +3,19 @@
 # Check if the SSH key is password protected? (default)
     # Do we want to bruteforce the password? (--bruteforce-ssh-password)
 # Fetch the public key and associated comment (default)
-import subprocess as sp
-import os
 
-def chmod_600(key):
-    os.chmod(key, 600)
+import os
+import subprocess as sp
+
+def chmod_400(key):
+    os.chmod(key, 400)
 
 def is_password_protected(key):
     return_code = sp.call(["ssh-keygen", "-y", "-P", "", "-f", key], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
     if return_code != 0:
-        print("👉 SSH key is password-protected")
+        print("😄 SSH key is password-protected")
     else:
-        print("👉 SSH key is not Password-protected")
+        print("❗ SSH key is not Password-protected")
 
 def generate_public_key_with_comment(filepath):
     try:
