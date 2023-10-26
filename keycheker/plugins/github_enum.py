@@ -14,7 +14,7 @@ def fetch_user_orgs():
 
     # Fetch the user's GitHub profile page
     url = f'https://github.com/{extracted_username}'
-    response = requests.get(url)
+    response = requests.get(url, verify=False)
 
     if response.status_code == 200:
         # Use the regular expression to extract organization names

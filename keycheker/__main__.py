@@ -7,9 +7,9 @@ from utils.colors import red, end
 from utils.read_file import read_key
 
 from core.identify_key import id_ssh
-from core.validate_ssh import is_password_protected, generate_public_key_with_comment, chmod_400, ssh_password_bruteforce
+from core.validate_ssh import is_password_protected, generate_public_key_with_comment, chmod_400
 
-from plugins.github_enum import check_ssh_github_username, fetch_user_orgs, github_repo_bruteforce
+from plugins.github_enum import check_ssh_github_username, fetch_user_orgs
 
 def identify(args):
     read_key(args.filepath)
@@ -60,7 +60,7 @@ def main():
     subparsers = parser.add_subparsers(title="subcommands", help="functionalities")
 
     identify_parser = subparsers.add_parser("identify", help="Identify the type of key.")
-    identify_parser.add_argument('--input', help="Provide your key file.", dest='filepath', required=False)
+    identify_parser.add_argument('--input', help="Provide your key file.", dest='filepath', required=True)
     identify_parser.set_defaults(func=identify)
 
     ssh_parser = subparsers.add_parser("ssh", help="Enumerate using SSH key.")
