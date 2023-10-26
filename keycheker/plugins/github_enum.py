@@ -4,17 +4,22 @@ import subprocess as sp
 def check_ssh_github_username(filepath):
     global extracted_username
     try:
-        _ = sp.check_output(["ssh", "-i", filepath, "git@github.com"], text=True, stderr=sp.PIPE)
+        _ = sp.check_output(["ssh", "-F", "/dev/null", "-i", filepath, "git@github.com"], text=True, stderr=sp.PIPE)
     except sp.CalledProcessError as e:
-        print("🤩 GitHub user found! Ref - ", end="")
         extracted_username = re.search(r"Hi ([^!]+)", e.stderr).group(1) if re.search(r"Hi ([^!]+)", e.stderr) else ""
-        print(f"https://github.com/{extracted_username}")
+        if extracted_username == "":
+            print("No Github username found Associated with this key")
+            return False
+        else:
+            print("🤩 GitHub user found! Ref - ", end="")
+            print(f"https://github.com/{extracted_username}")
+            return True
 
 def fetch_user_orgs():
 
     # Fetch the user's GitHub profile page
     url = f'https://github.com/{extracted_username}'
-    response = requests.get(url, verify=False)
+    response = requests.get(url)
 
     if response.status_code == 200:
         # Use the regular expression to extract organization names

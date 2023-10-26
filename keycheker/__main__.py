@@ -32,8 +32,8 @@ def ssh(args):
         pass
     
     if args.enumerate_gh == True:
-        check_ssh_github_username(args.filepath)
-        fetch_user_orgs()
+        if check_ssh_github_username(args.filepath):
+            fetch_user_orgs()
     
     # if args.brute_ssh_pass == True:
     #     print("Instructions to Bruteforce SSH Password")
