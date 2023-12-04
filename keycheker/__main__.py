@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 
-import argparse, sys
+import argparse, sys, inspect
 
 
 from utils.colors import red, end
 from utils.read_file import read_key
 
-from keycheker.core.ssh.identify_key import id_ssh
-from keycheker.core.ssh.validate_ssh import is_password_protected, generate_public_key_with_comment, chmod_400
+from core.identify_key import *
+from core.ssh.validate_ssh import *
 
-from keycheker.plugins.github.github_enum import check_ssh_github_username, fetch_user_orgs
+from core import identify_key
+
+from plugins.github.github_enum import *
 
 def identify(args):
-    read_key(args.filepath)
     key = read_key(args.filepath)
-    key_type = id_ssh(key)
-    print(key_type)
+
+    # Iterate through all the functions in the identify_key.py and check for a valid key.
+    function_names = [name for name, _ in inspect.getmembers(identify_key, inspect.isfunction)]
+    for function_name in function_names:
+        if hasattr(identify_key, function_name):
+            function_to_call = getattr(identify_key, function_name)
+            key_type = function_to_call(key)
+    if key_type == None:
+        print("😔 Cannot identify the key.")
     
 
 def ssh(args):
