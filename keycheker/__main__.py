@@ -28,16 +28,12 @@ def identify(args):
 
 def ssh(args):
     read_key(args.filepath)
-    try:
-        is_password_protected(args.filepath)
-    except:
-        chmod_400(args.filepath)
-        is_password_protected(args.filepath)
+    if(is_password_protected(args.filepath) == True):
+        print("🙏 Please remove the password from the file. Ref - <insert-link-here>")
+        exit()
         
     if args.generate_public_key == True:
         generate_public_key_with_comment(args.filepath)
-    else:
-        pass
     
     if args.enumerate_gh == True:
         if check_ssh_github_username(args.filepath):
@@ -72,8 +68,7 @@ def main():
     ssh_parser.add_argument('--input', help="Provide your public or private SSH key.", dest='filepath', required=True)
     ssh_parser.add_argument('--generate-public-key', help="Generates the associated public key.", dest='generate_public_key', action='store_true')
     ssh_parser.add_argument('--enumerate-gh', help="Enumerate GitHub using the SSH Private Key", dest='enumerate_gh', action='store_true')
-    ssh_parser.add_argument('--bruteforce-ssh-pass-help', help="Provides you the command to bruteforce ssh key(s) password", dest='brute_ssh_pass', action='store_true')
-    ssh_parser.add_argument('--bruteforce-gh-repo-help', help="Provides you the command to bruteforce GitHub repositories of the user", dest='brute_gh_repo', action='store_true')
+    ssh_parser.add_argument('--bruteforce-gh-repo', help="Provides you the command to bruteforce GitHub repositories of the user", dest='brute_gh_repo', action='store_true')
     ssh_parser.set_defaults(func=ssh)
 
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])

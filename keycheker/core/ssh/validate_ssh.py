@@ -14,8 +14,10 @@ def is_password_protected(key):
     return_code = sp.call(["ssh-keygen", "-y", "-P", "", "-f", key], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
     if return_code != 0:
         print("😄 SSH key is password-protected")
+        return True
     else:
         print("❗ SSH key is not Password-protected")
+        return False
 
 def generate_public_key_with_comment(filepath):
     try:

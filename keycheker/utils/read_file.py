@@ -4,5 +4,5 @@ def read_key(file_path):
             key_string = file.read()
             return(key_string)
     except FileNotFoundError:
-        print("😔 Unable to identify the file.")
+        print("❗❗ File Not Found! ❗❗ Exiting.")
         exit()
