@@ -20,11 +20,8 @@ def is_password_protected(key):
 def generate_public_key_with_comment(filepath):
     try:
         output = sp.check_output(["ssh-keygen", "-yef", filepath], text=True)
-        print("👉 Public Key with associated comment -")
+        print("👉 Associated Public Key -")
         print(output)
     except sp.CalledProcessError as e:
         print(f"❌ Command failed with return code {e.returncode}")
-
-# def ssh_password_bruteforce(key):
-#     pass
 

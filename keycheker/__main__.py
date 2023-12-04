@@ -6,10 +6,10 @@ import argparse, sys
 from utils.colors import red, end
 from utils.read_file import read_key
 
-from core.identify_key import id_ssh
-from core.validate_ssh import is_password_protected, generate_public_key_with_comment, chmod_400
+from keycheker.core.ssh.identify_key import id_ssh
+from keycheker.core.ssh.validate_ssh import is_password_protected, generate_public_key_with_comment, chmod_400
 
-from plugins.github_enum import check_ssh_github_username, fetch_user_orgs
+from keycheker.plugins.github.github_enum import check_ssh_github_username, fetch_user_orgs
 
 def identify(args):
     read_key(args.filepath)
@@ -35,12 +35,9 @@ def ssh(args):
         if check_ssh_github_username(args.filepath):
             fetch_user_orgs()
     
-    # if args.brute_ssh_pass == True:
-    #     print("Instructions to Bruteforce SSH Password")
+    if args.brute_ssh_pass == True:
+        print("Instructions to Bruteforce SSH Password")
 
-    # if args.brute_gh_repo == True:
-    #     pass
-        
 
 def main():
     print('''%s
@@ -65,7 +62,7 @@ def main():
 
     ssh_parser = subparsers.add_parser("ssh", help="Enumerate using SSH key.")
     ssh_parser.add_argument('--input', help="Provide your public or private SSH key.", dest='filepath', required=True)
-    ssh_parser.add_argument('--generate-public-key', help="Generates the public key with the comment associated with it.", dest='generate_public_key', action='store_true')
+    ssh_parser.add_argument('--generate-public-key', help="Generates the associated public key.", dest='generate_public_key', action='store_true')
     ssh_parser.add_argument('--enumerate-gh', help="Enumerate GitHub using the SSH Private Key", dest='enumerate_gh', action='store_true')
     ssh_parser.add_argument('--bruteforce-ssh-pass-help', help="Provides you the command to bruteforce ssh key(s) password", dest='brute_ssh_pass', action='store_true')
     ssh_parser.add_argument('--bruteforce-gh-repo-help', help="Provides you the command to bruteforce GitHub repositories of the user", dest='brute_gh_repo', action='store_true')
