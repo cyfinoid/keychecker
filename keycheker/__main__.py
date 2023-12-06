@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import argparse, sys, inspect
+import argparse
+import inspect
+from types import SimpleNamespace
 
 
 from utils.colors import red, end
@@ -22,12 +24,15 @@ def identify(args):
         if hasattr(identify_key, function_name):
             function_to_call = getattr(identify_key, function_name)
             key_type = function_to_call(key)
+            return key_type
     if key_type == None:
         print("😔 Cannot identify the key.")
+        return None
     
 
 def ssh(args):
     read_key(args.filepath)
+    user_orgs = []
     if(is_password_protected(args.filepath) == True):
         print("🙏 Please remove the password from the file. Ref - <insert-link-here>")
         exit()
@@ -37,10 +42,53 @@ def ssh(args):
     
     if args.enumerate_gh == True:
         if check_ssh_github_username(args.filepath):
-            fetch_user_orgs()
+            user_orgs = fetch_user_orgs()
+    # user_orgs = fetch_user_orgs()
+    # print(user_orgs)
+
+    if args.brute_gh_repo == True:
+        # user_orgs = fetch_user_orgs()
+        # print(user_orgs)
+        wordlist = "/Users/cardinal/wordlist.txt"
+        github_repo_bruteforce(user_orgs[1], user_orgs[0], wordlist, args.filepath)
+
     
-    if args.brute_ssh_pass == True:
-        print("Instructions to Bruteforce SSH Password")
+    # if args.brute_ssh_pass == True:
+    #     print("Instructions to Bruteforce SSH Password")
+
+
+def interactive():
+    args = SimpleNamespace()
+
+    print("keychecker is used to find more details of the juicy secret keys that you found in the wild!\n")
+    file_path = input("Enter the key file's absolute path: ")
+    args.filepath = file_path
+
+    generate_public_key = input("Do you want to generate the associated public key? (y/n): ")
+    if(generate_public_key == 'y'):
+        args.generate_public_key = True
+    else:
+        args.generate_public_key = False
+        
+
+    enumerate_github = input("Do you want to know if the key is associated with GitHub? (y/n): ")
+    if(enumerate_github == 'y'):
+        args.enumerate_gh = True
+    else:
+        args.enumerate_gh = False
+
+    if (args.enumerate_gh == True):
+        bruteforce_private_repo = input("Do you want to enumerate private repositories? (y/n): ")
+        if(bruteforce_private_repo == 'y'): 
+            args.brute_gh_repo = True
+
+    
+
+    print("\n")
+    print("🫸 Identifying the key...")
+    key_type = identify(args)
+    if (key_type == 'ssh_priv_key' or key_type == 'ssh_pub_key'):
+        ssh(args)
 
 
 def main():
@@ -71,7 +119,11 @@ def main():
     ssh_parser.add_argument('--bruteforce-gh-repo', help="Provides you the command to bruteforce GitHub repositories of the user", dest='brute_gh_repo', action='store_true')
     ssh_parser.set_defaults(func=ssh)
 
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    # args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    args = parser.parse_args()
+
+    if not any(vars(args).values()):
+        interactive()
 
     if hasattr(args, 'func'):
         args.func(args)
