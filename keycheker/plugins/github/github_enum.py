@@ -6,9 +6,8 @@ from utils.read_file import read_key
 
 def check_ssh_github_username(filepath):
     global extracted_username
-    try:
-        _ = sp.check_output(["ssh", "-F", "/dev/null", "-i", filepath, "git@github.com"], text=True, stderr=sp.PIPE)
-    except sp.CalledProcessError as e:
+    ssh_output = sp.check_output(["ssh", "-F", "/dev/null", "-i", filepath, "git@github.com"], text=True, stderr=sp.PIPE)
+    if ssh_output == "git@github.com: Permission denied (publickey).":
         extracted_username = re.search(r"Hi ([^!]+)", e.stderr).group(1) if re.search(r"Hi ([^!]+)", e.stderr) else ""
         if extracted_username == "":
             print("❌ No GitHub username found associated with this key.")
