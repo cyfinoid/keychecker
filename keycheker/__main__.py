@@ -15,6 +15,7 @@ from core.ssh.validate_ssh import *
 from core import identify_key
 
 from plugins.github.github_enum import *
+from plugins.gitlab.gitlab_enum import *
 
 def identify(args):
     key = read_key(args.filepath)
@@ -47,10 +48,22 @@ def ssh(args):
 
         if args.bruteforce == True:
             wordlist = args.inject_wordlist
+            if wordlist == '':
+                print("❌ Please provide a wordlist to bruteforce ❌")
+                exit()
             github_repo_bruteforce(user_orgs[1], user_orgs[0], wordlist, args.filepath)
-        else:
-            print("❌ Please provide a wordlist to bruteforce ❌")
-            exit()
+
+    if args.enumerate_gl == True:
+        if check_ssh_gitlab_username(args.filepath):
+            user_orgs = fetch_gitlab_user_groups()
+
+        if args.bruteforce == True:
+            wordlist = args.inject_wordlist
+            if wordlist == '':
+                print("❌ Please provide a wordlist to bruteforce ❌")
+                exit()
+            gitlab_repo_bruteforce(user_orgs[1], user_orgs[0], wordlist, args.filepath)
+        
 
 
 
@@ -73,25 +86,36 @@ def interactive():
         else:
             args.generate_public_key = False
 
-        enumerate_github = input("Do you want to know if the key is associated with GitHub? (y/n): ")
-        if(enumerate_github == 'y'):
+        enumerate_gh_gl = input("Do you want to know if the key is associated with Code Repositories? (github/gitlab) : ")
+        if(enumerate_gh_gl == 'github'):
             args.enumerate_gh = True
             automated_command.append("--github")
         else:
             args.enumerate_gh = False
+        
+        if(enumerate_gh_gl == 'gitlab'):
+            args.enumerate_gl = True
+            automated_command.append("--gitlab")
+        else:
+            args.enumerate_gl = False
 
-        if (args.enumerate_gh == True):
+        if ((args.enumerate_gh == True) or (args.enumerate_gl == True)):
             bruteforce_private_repo = input("Do you want to enumerate private repositories? (y/n): ")
-            try:
-                wordlist = input("Provide the absolute path for the fuzzing wordlist: ")
-                read_key(wordlist)
-                if(bruteforce_private_repo == 'y'): 
-                    args.bruteforce = True
-                    args.inject_wordlist = wordlist
-                    automated_command.append(f"--bruteforce --wordlist {args.inject_wordlist}")
-            except:
-                print("❌ Please provide a repository name wordlist to bruteforce the private repository ❌")
-                exit()
+            if (bruteforce_private_repo == 'y'):
+                try:
+                    wordlist = input("Provide the absolute path for the fuzzing wordlist: ")
+                    read_key(wordlist)
+                    if(bruteforce_private_repo == 'y'): 
+                        args.bruteforce = True
+                        args.inject_wordlist = wordlist
+                        automated_command.append(f"--bruteforce --wordlist {args.inject_wordlist}")
+                except:
+                    print("❌ Please provide a repository name wordlist to bruteforce the private repository ❌")
+                    exit()
+
+            else:
+                args.bruteforce = False
+                args.inject_wordlist = ''
 
         ssh(args)
         print(f"\n\n---\nGenerate automated searches using the given command for the desired outcome - ")
@@ -121,10 +145,12 @@ def main():
 
     ssh_parser = subparsers.add_parser("ssh", help="Enumerate using SSH key.")
     ssh_parser.add_argument('--input', help="Provide your public or private SSH key.", dest='filepath', required=True)
-    ssh_parser.add_argument('--generate-public-key', help="Generates the associated public key.", dest='generate_public_key', action='store_true')
-    ssh_parser.add_argument('--github', help="Enumerate GitHub using the SSH Private Key", dest='enumerate_gh', action='store_true')
     ssh_parser.add_argument('--bruteforce', help="Provides you the command to bruteforce the intended names.", dest='bruteforce', action='store_true')
     ssh_parser.add_argument('--wordlist', help="Provide the absolute path for the fuzzing wordlist.", dest='inject_wordlist')
+    ssh_parser.add_argument('--generate-public-key', help="Generates the associated public key.", dest='generate_public_key', action='store_true')
+    ssh_parser.add_argument('--github', help="Enumerate GitHub using the SSH Private Key", dest='enumerate_gh', action='store_true')
+    ssh_parser.add_argument('--gitlab', help="Enumerate GitLab using the SSH Private Key", dest='enumerate_gl', action='store_true')
+
     ssh_parser.set_defaults(func=ssh)
 
     args = parser.parse_args()
