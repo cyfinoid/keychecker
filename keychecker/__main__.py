@@ -68,7 +68,7 @@ def ssh(args):
 
 def interactive():
     args = SimpleNamespace()
-    automated_command = ["python3 al"]
+    automated_command = ["python3 keychecker"]
     print("keychecker is used to find more details of the juicy secret keys that you found in the wild!\n")
     file_path = input("Enter the key file's absolute path: ")
     read_key(file_path)
