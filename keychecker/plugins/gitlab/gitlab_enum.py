@@ -46,6 +46,8 @@ def gitlab_repo_bruteforce(extracted_username, orgs, wordlist, key):
     read_key(wordlist)
     private_repos ={}
 
+    print()
+
     # Fuzzing for private repositories
     with open(wordlist, "r") as wordlist_file:
         print(f"🏃 Fuzzing repositories for the {extracted_username}...", end="")
