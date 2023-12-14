@@ -34,6 +34,7 @@ def fetch_gitlab_user_groups():
         print(f"👉 Public Groups {extracted_username} is a part of: ", end="")
         for org_name in group_names:
             print(org_name, end=" |")
+        print()
         return [group_names, extracted_username]
     else:
         print(f"Failed to fetch the GitLab profile page. Status code: {response.status_code}")

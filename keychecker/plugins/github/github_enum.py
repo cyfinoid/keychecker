@@ -6,8 +6,9 @@ from utils.read_file import read_key
 
 def check_ssh_github_username(filepath):
     global extracted_username
-    ssh_output = sp.check_output(["ssh", "-F", "/dev/null", "-i", filepath, "git@github.com"], text=True, stderr=sp.PIPE)
-    if ssh_output == "git@github.com: Permission denied (publickey).":
+    try: 
+        _ = sp.check_output(["ssh", "-F", "/dev/null", "-i", filepath, "git@github.com"], text=True, stderr=sp.PIPE)
+    except Exception as e:
         extracted_username = re.search(r"Hi ([^!]+)", e.stderr).group(1) if re.search(r"Hi ([^!]+)", e.stderr) else ""
         if extracted_username == "":
             print("❌ No GitHub username found associated with this key.")
@@ -28,6 +29,7 @@ def fetch_github_user_orgs():
         print(f"👉 Public Organizations {extracted_username} is a part of: ", end="")
         for org_name in organization_names:
             print(org_name, end=" |")
+        print()
         return [organization_names, extracted_username]
     else:
         print(f"Failed to fetch the GitHub profile page. Status code: {response.status_code}")
