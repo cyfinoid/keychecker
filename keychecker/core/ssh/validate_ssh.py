@@ -18,6 +18,10 @@ def generate_public_key_with_comment(filepath):
         output = sp.check_output(["ssh-keygen", "-yef", filepath], text=True)
         print("👉 Associated Public Key -")
         print(output)
+
+        output = sp.check_output(["ssh-keygen", "-lf", filepath], text=True)
+        print("Associated Comment with the key is - ")
+        print(output)
     except sp.CalledProcessError as e:
         print(f"❌ Command failed with return code {e.returncode}")
 
