@@ -1,11 +1,11 @@
-# keychecker 🗝️✨
+# `keychecker` 🗝️✨
 
 <p align="center">
     <i>unleash the potential of discovered keys in the wild with the keychecker</i><br>
   <img src="assets/keychecker.png" alt="keychecker Logo">
 </p>
 
-keychecker is a comprehensive key reconnaissance framework designed to facilitate the identification of potential usage locations and provide detailed insights into discovered keys during red team activities.
+`keychecker` is a comprehensive key reconnaissance framework designed to facilitate the identification of potential usage locations and provide detailed insights into discovered keys during red team activities.
 
 ## 🚀 Features
 * **Key Reconnaissance** - keychecker employs advanced scanning techniques to identify potential places where keys can be potentially used.
