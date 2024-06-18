@@ -26,13 +26,17 @@ def fetch_github_user_orgs():
     if response.status_code == 200:
         # Use the regular expression to extract organization names
         organization_names = re.findall(r'data-hovercard-type="organization" data-hovercard-url="/orgs/([^/]+)/hovercard"', response.text)
-        print(f"👉 Public Organizations {extracted_username} is a part of: ", end="")
-        for org_name in organization_names:
-            print(org_name, end=" |")
-        print()
+        if organization_names:
+            print(f"👉 Public Organizations {extracted_username} is a part of: ", end="")
+            for org_name in organization_names:
+                print(org_name, end=" |")
+            print()
+            
+        else:
+            print(f"🥲  {extracted_username} is not a part of any publicly mentioned GitHub organization!")
         return [organization_names, extracted_username]
     else:
-        print(f"Failed to fetch the GitHub profile page. Status code: {response.status_code}")
+        print(f"🧯  Failed to fetch the GitHub profile page. Status code: {response.status_code}")
 
 
 # Bruteforce the repository (to find private repos) by the user specified wordlist.
@@ -47,7 +51,6 @@ def github_repo_bruteforce(extracted_username, orgs, wordlist, key):
     user_public_repo = requests.get(f"https://api.github.com/users/{extracted_username}/repos").json()
     user_public_repo = [repo["name"] for repo in user_public_repo]
     if not user_public_repo:
-        # print("❌ No public repositories for the user")
         public_repos[extracted_username]=[]
     else:
         public_repos[extracted_username]=user_public_repo
@@ -63,8 +66,8 @@ def github_repo_bruteforce(extracted_username, orgs, wordlist, key):
     print()
 
     # Fuzzing for private repositories
+    print(f"🏃 Fuzzing repositories for the {extracted_username}...", end="", flush=True)
     with open(wordlist, "r") as wordlist_file:
-        print(f"🏃 Fuzzing repositories for the {extracted_username}...", end="")
         temp = []
         for line in wordlist_file:
             line = line.strip()

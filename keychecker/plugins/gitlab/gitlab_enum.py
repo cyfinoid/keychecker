@@ -31,10 +31,13 @@ def fetch_gitlab_user_groups():
 
         # Use the regular expression to extract organization names
         group_names = re.findall(r'<a\s+class="group-name"[^>]*>([^<]+)</a>', decoded_content)
-        print(f"👉 Public Groups {extracted_username} is a part of: ", end="")
-        for org_name in group_names:
-            print(org_name, end=" |")
-        print()
+        if group_names:
+            print(f"👉 Public Groups {extracted_username} is a part of: ", end="")
+            for org_name in group_names:
+                print(org_name, end=" |")
+            print()
+        else:
+            print("🥲  {extracted_username} is not a part of any publicly mentioned GitLab organization!")
         return [group_names, extracted_username]
     else:
         print(f"Failed to fetch the GitLab profile page. Status code: {response.status_code}")
@@ -50,8 +53,8 @@ def gitlab_repo_bruteforce(extracted_username, orgs, wordlist, key):
     print()
 
     # Fuzzing for private repositories
+    print(f"🏃 Fuzzing repositories for the {extracted_username}...", end="")
     with open(wordlist, "r") as wordlist_file:
-        print(f"🏃 Fuzzing repositories for the {extracted_username}...", end="")
         temp = []
         for line in wordlist_file:
             line = line.strip()
