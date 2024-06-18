@@ -70,6 +70,13 @@ keychecker ssh --input /Users/molly/wild_keys/id_rsa --gitlab --bruteforce --wor
 
 This command examines the SSH key located at `/Users/molly/wild_keys/id_rsa` for it's association with any user in `gitlab` platform and if any user is found then it will bruteforce the private repositories of the user based on the wordlist provided.
 
+
+You can also take an interactive approach by simply typing:
+```shell
+keychecker
+```
+This command will prompt you with questions and guide you through the process to obtain the results.
+
 ## 🤝 Contributing
 Follow our [Contribution Guidelines](CONTRIBUTING.md) (TBD).
 
