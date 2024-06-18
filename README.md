@@ -2,7 +2,7 @@
 
 <p align="center">
     <i>Unleash the Potential of Discovered Keys in the Wild with KeyChecker</i><br>
-  <img src="assets/keychecker_logo_3.png" alt="KeyChecker Logo">
+  <img src="assets/keychecker.png" alt="keychecker Logo">
 </p>
 
 KeyChecker is a comprehensive key reconnaissance framework designed to facilitate the identification of potential usage locations and provide detailed insights into discovered keys during red team activities.
