@@ -1,22 +1,22 @@
 # keychecker 🗝️✨
 
 <p align="center">
-    <i>Unleash the Potential of Discovered Keys in the Wild with KeyChecker</i><br>
+    <i>unleash the potential of discovered keys in the wild with the keychecker</i><br>
   <img src="assets/keychecker.png" alt="keychecker Logo">
 </p>
 
-KeyChecker is a comprehensive key reconnaissance framework designed to facilitate the identification of potential usage locations and provide detailed insights into discovered keys during red team activities.
+keychecker is a comprehensive key reconnaissance framework designed to facilitate the identification of potential usage locations and provide detailed insights into discovered keys during red team activities.
 
 ## 🚀 Features
-* **Key Reconnaissance** - KeyChecker employs advanced scanning techniques to identify potential places where keys can be potentially used.
-* **Detailed Key Insights** - KeyChecker goes beyond simple detection, providing in-depth information about the discovered keys, such as associated services, encryption algorithms, or any other information that can be fetched from the key.
-* **Extensibility** - KeyChecker is designed with extensibility in mind, allowing users to easily integrate custom modules for tailored reconnaissance and analysis.
+* **Key Reconnaissance** - keychecker employs advanced scanning techniques to identify potential places where keys can be potentially used.
+* **Detailed Key Insights** - keychecker goes beyond simple detection, providing in-depth information about the discovered keys, such as associated services, encryption algorithms, or any other information that can be fetched from the key.
+* **Extensibility** - keychecker is designed with extensibility in mind, allowing users to easily integrate custom modules for tailored reconnaissance and analysis.
 
 ## 🧙‍♂️ Getting Started
 
 ### Prerequisites
-Before installing KeyChecker, ensure that your system meets the following requirements:
-- **Python Version**: KeyChecker is compatible with Python 3.11 and above.
+Before installing keychecker, ensure that your system meets the following requirements:
+- **Python Version**: keychecker is compatible with Python 3.11 and above.
 ```bash
 python --version
 ```
