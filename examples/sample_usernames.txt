@@ -1,0 +1,25 @@
+# Sample usernames for bruteforce testing
+# Add common usernames that might be associated with SSH keys
+admin
+administrator
+root
+user
+test
+demo
+dev
+developer
+ops
+devops
+deploy
+deployment
+ci
+jenkins
+github-actions
+gitlab-ci
+build
+runner
+service
+api
+web
+app
+server

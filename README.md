@@ -1,84 +1,164 @@
-# `keychecker` 🗝️✨
+# 🔑 KeyChecker
 
-<p align="center">
-    <i>unleash the potential of discovered keys in the wild with the keychecker</i><br>
-  <img src="assets/keychecker.png" alt="keychecker Logo">
-</p>
+_A fast CLI to fingerprint SSH private keys and identify which Git hosting accounts they unlock (GitHub, GitLab, Bitbucket, …)._
 
-`keychecker` is a comprehensive key reconnaissance framework designed to facilitate the identification of potential usage locations and provide detailed insights into discovered keys during red team activities.
-
-## 🚀 Features
-* **Key Reconnaissance** - keychecker employs advanced scanning techniques to identify potential places where keys can be potentially used.
-* **Detailed Key Insights** - keychecker goes beyond simple detection, providing in-depth information about the discovered keys, such as associated services, encryption algorithms, or any other information that can be fetched from the key.
-* **Extensibility** - keychecker is designed with extensibility in mind, allowing users to easily integrate custom modules for tailored reconnaissance and analysis.
-
-## 🧙‍♂️ Getting Started
-
-### Prerequisites
-Before installing keychecker, ensure that your system meets the following requirements:
-- **Python Version**: keychecker is compatible with Python 3.11 and above.
-```bash
-python --version
-```
-
-- **pip3 Version**: `pip` version should be comptaible with Python3.11. 
-
-### Installation
-To install the project use the `pip` utility
-```bash
-pip install keychecker
-```
-
-### Usage
-To run keychecker in interactive mode, just run the following command - 
-```bash
-keychecker
-```
-
-It will also generate a command that you can run to automatically generate the same desired output.
-
-To run the command with flags, run the following command -
-```bash
-$ keychecker --help
-
-|   _      _ |_   _   _ |   _  ._
-|< (/_ \/ (_ | | (/_ (_ |< (/_ | 
-       /                         1.0.0 
 ---
 
-usage: keychecker [-h] {identify,ssh} ...
+## ✨ Features
 
-Identifies the key and enumerates it for details.
+- **Key intelligence**
+  - Detect key type (`ed25519`, `rsa`, `ecdsa`, `dsa`) and flag deprecated/insecure keys.
+  - Check if the private key is passphrase-protected.
+  - Extract public key and **comment** (local username, hostname, IP, etc.).
 
-options:
-  -h, --help      show this help message and exit
+- **Account discovery**
+  - Safely handshake with Git servers (GitHub, GitLab, Bitbucket, …).
+  - Parse SSH identity banner to recover mapped **username/handle**.
+  - Read-only checks – no repo operations triggered.
 
-subcommands:
-  {identify,ssh}  functionalities
-    identify      Identify the type of key.
-    ssh           Enumerate using SSH key.
+- **Bruteforce module**
+  - Use `git ls-remote` probes with a candidate username list.
+  - Useful for servers that require repo paths to validate identity.
 
-For any issues/concerns reach out to keychecker@cyfinoid.com
+- **Output modes**
+  - Human-readable table by default.
+  - JSON mode (`--json`) for CI/CD pipelines.
+  - Exit codes for automation.
+
+---
+
+## 🚀 Quick Start
+
+Install:
+
+```bash
+pipx install keychecker
+# or
+pip install --user keychecker
+```
+
+Basic usage (local analysis only):
+
+```bash
+keychecker -i ~/.ssh/id_ed25519
+```
+
+Validate against servers:
+
+```bash
+keychecker -i ~/.ssh/id_ed25519 --validate github gitlab bitbucket
+```
+
+Bruteforce mode:
+
+```
+keychecker -i ~/.ssh/id_rsa --bruteforce --server gitlab --wordlist usernames.txt
 ```
 
 
-## 🌟 Examples
-
-```bash 
-keychecker ssh --input /Users/molly/wild_keys/id_rsa --gitlab --bruteforce --wordlist /Users/molly/wordlist.txt
+⚙️ Usage
+```bash
+keychecker -i INPUT [--validate SERVERS…] [--bruteforce --server NAME --wordlist FILE]
+            [--timeout SEC] [--json] [--public-out FILE] [--no-banner]
+            [--known-hosts PATH] [--concurrency N] [--verbose]
 ```
 
-This command examines the SSH key located at `/Users/molly/wild_keys/id_rsa` for it's association with any user in `gitlab` platform and if any user is found then it will bruteforce the private repositories of the user based on the wordlist provided.
+Options
+
+-i, --input Path to private key file (required).
+
+--validate One or more servers (github, gitlab, bitbucket).
+
+--bruteforce Enable username enumeration strategy.
+
+--server Server shortname (used with --bruteforce).
+
+--wordlist File with candidate usernames.
+
+--json JSON output mode.
+
+--timeout Per-connection timeout (default: 5s).
+
+--public-out Save derived public key to file.
+
+--concurrency Parallel connections (default: auto).
+
+--verbose, -v Debug/trace logs.
+
+🌍 Supported Servers
+Shortname	Host	Notes
+github	git@github.com	Reveals GitHub username in banner.
+gitlab	git@gitlab.com	May require repo path, bruteforce helps
+bitbucket	git@bitbucket.org	Similar to GitLab behavior.
+📋 Example Output
+
+Human readable:
+
+Key: ./keys/id_ed25519
+Type: ed25519
+Passphrase: NO
+Public: ssh-ed25519 AAAAC3Nza... comment='runner@build-01'
+Insights: local_user=runner, host=build-01
+
+Validation:
+- github: username ✅
+- gitlab: auth success, username=? (repo path required)
 
 
-You can also take an interactive approach by simply typing:
-```shell
-keychecker
-```
-This command will prompt you with questions and guide you through the process to obtain the results.
+JSON mode:
 
-## 🤝 Contributing
-Follow our [Contribution Guidelines](CONTRIBUTING.md) (TBD).
+{
+  "input": "./keys/id_ed25519",
+  "key": {"type": "ed25519", "bits": 256, "passphrase": false},
+  "public_key": {"fingerprint_sha256": "SHA256:abc...", "comment": "runner@build-01"},
+  "validation": {
+    "github": {"reachable": true, "username": "anantshri"},
+    "gitlab": {"reachable": true, "username": null}
+  }
+}
 
-## 📜 License
-This project is licensed under the GPL-3.0 - see the LICENSE file for enchanting details.
+❗ Exit Codes
+
+0 – success
+
+1 – runtime/IO/argument error
+
+2 – all servers unreachable
+
+3 – bruteforce attempted, no match found
+
+4 – key parsed but flagged (deprecated/insecure)
+
+🔐 Security Notes
+
+Read-only checks. No repository access or write operations.
+
+Only use against keys you own or are authorized to test.
+
+Private keys are processed in-memory; never uploaded.
+
+Some providers may log SSH handshakes – use responsibly.
+
+🛠 Development
+
+Clone and install in editable mode:
+
+git clone https://github.com/cyfinoid/keychecker
+cd keychecker
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pytest -q
+
+📌 Roadmap
+
+Self-hosted GitLab/Bitbucket (--host / --port).
+
+Smarter bruteforce with public repo heuristics.
+
+SBOM-friendly JSON/CycloneDX output.
+
+Bulk audit mode for orgs.
+
+📜 License
+
+MIT
