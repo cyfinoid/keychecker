@@ -2,6 +2,9 @@
 
 _A fast CLI tool to fingerprint SSH private keys and identify which Git hosting accounts they unlock (GitHub, GitLab, Bitbucket, Codeberg, Gitea, Hugging Face)._
 
+> 🔬 **Part of Cyfinoid Research's Software Supply Chain Security Research**  
+> This tool is created by [Cyfinoid Research](https://cyfinoid.com/research/software-supply-chain-security/) as part of our offensive tooling research focused on identification of next steps once an SSH private key is discovered. Learn more about our software supply chain security research and training programs.
+
 ---
 
 ## ✨ Features
@@ -149,11 +152,11 @@ keychecker ~/.ssh/id_rsa --validate github --timeout 10 --verbose
 
 | Server | Host | Features | Notes |
 |--------|------|----------|-------|
-| **GitHub** | `git@github.com` | Username extraction, Organization discovery | Reveals username in SSH banner |
-| **GitLab** | `git@gitlab.com` | Username extraction | May require repo path for full discovery |
-| **Bitbucket** | `git@bitbucket.org` | Username extraction | Similar behavior to GitLab |
-| **Codeberg** | `git@codeberg.org` | Username extraction | Gitea-based platform |
-| **Gitea** | `git@gitea.com` | Username extraction | Self-hosted Git platform |
+| **GitHub** | `git@github.com` | Username extraction, Organization discovery | SaaS platform |
+| **GitLab** | `git@gitlab.com` | Username extraction | SaaS and Selfhostable platform |
+| **Bitbucket** | `git@bitbucket.org` | Key confirmation | SaaS Platform |
+| **Codeberg** | `git@codeberg.org` | Username extraction | SaaS based on forgejo |
+| **Gitea** | `git@gitea.com` | Username extraction | Saas based on Gitea |
 | **Hugging Face** | `git@hf.co` | Username extraction | AI/ML model hosting platform |
 
 ---
@@ -353,3 +356,29 @@ This project is licensed under the GNU General Public License v3 (GPLv3) - see t
 This tool is designed for security auditing and penetration testing of systems you own or have explicit permission to test. Always ensure you have proper authorization before using this tool against any systems or keys you don't own.
 
 The authors are not responsible for any misuse of this software.
+
+---
+
+## 🔬 Cyfinoid Research
+
+**Cutting-Edge Software Supply Chain Security Research**
+
+Pioneering advanced software supply chain security research and developing innovative offensive security tools for the community.
+
+This tool is part of our free research toolkit - helping security researchers and penetration testers identify next steps after discovering SSH private keys.
+
+### 🌐 Software Supply Chain Focus
+
+Specializing in software supply chain attacks, CI/CD pipeline security, and offensive security research.
+
+Our research tools help organizations understand their software supply chain vulnerabilities and develop effective defense strategies.
+
+### 🎓 Learn & Explore
+
+Explore our professional training programs, latest research insights, and free open source tools developed from our cutting-edge cybersecurity research.
+
+**[Upcoming Trainings](https://cyfinoid.com/trainings/#upcoming-trainings)** | **[Read Our Blog](https://cyfinoid.com/blog/)** | **[Open Source by Cyfinoid](https://cyfinoid.com/open-source/)**
+
+Hands-on training in software supply chain security, CI/CD pipeline attacks, and offensive security techniques
+
+© 2025 Cyfinoid Research. KeyChecker - Free Software Supply Chain Security Research Tool

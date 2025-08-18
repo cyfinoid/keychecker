@@ -21,6 +21,7 @@ class OutputFormatter:
         banner = """
 🔑 KeyChecker - SSH Key Analysis Tool
 =====================================
+🎓 Learn cybersecurity: https://cyfinoid.com/trainings/#upcoming-trainings
 """
         print(banner)
 
