@@ -345,6 +345,16 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ---
 
+## 💬 Community & Discussion
+
+Join our Discord server for discussions, questions, and collaboration:
+
+**[Join our Discord Server](https://discord.gg/7trkcUFrgR)**
+
+Connect with other security researchers, share your findings, and get help with KeyChecker usage and development.
+
+---
+
 ## 📄 License
 
 This project is licensed under the GNU General Public License v3 (GPLv3) - see the [LICENSE](LICENSE) file for details.
