@@ -355,6 +355,16 @@ Connect with other security researchers, share your findings, and get help with 
 
 ---
 
+## 🙏 Acknowledgments & Contributions
+
+### Contributors
+
+We'd like to thank the following contributors for their valuable input and support:
+
+- **[Kumar Ashwin](https://github.com/0xcardinal/)** - Initial ideation and help with PoC building
+
+---
+
 ## 📄 License
 
 This project is licensed under the GNU General Public License v3 (GPLv3) - see the [LICENSE](LICENSE) file for details.
