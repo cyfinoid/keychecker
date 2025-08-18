@@ -1,0 +1,355 @@
+# 🔑 KeyChecker
+
+_A fast CLI tool to fingerprint SSH private keys and identify which Git hosting accounts they unlock (GitHub, GitLab, Bitbucket, Codeberg, Gitea, Hugging Face)._
+
+---
+
+## ✨ Features
+
+### 🔍 Key Intelligence
+- **Multi-format support**: OpenSSH, PEM, and DER private key formats
+- **Key type detection**: `ed25519`, `rsa`, `ecdsa`, `dsa` with security analysis
+- **Security validation**: Flags deprecated/insecure algorithms and weak key sizes
+- **Passphrase detection**: Identifies if private keys are encrypted
+- **Metadata extraction**: Public key, fingerprints (SHA256/MD5), and comments
+- **Insight parsing**: Extracts local username, hostname, and IP addresses from comments
+
+### 🌐 Account Discovery
+- **Multi-provider support**: GitHub, GitLab, Bitbucket, Codeberg, Gitea, Hugging Face
+- **Safe SSH handshakes**: Read-only validation without triggering repo operations
+- **Username extraction**: Parses SSH identity banners to recover mapped usernames
+- **Organization discovery**: Identifies user membership in organizations (GitHub API)
+
+### 📁 Repository Discovery
+- **Private repo detection**: Uses `git ls-remote` probes with wordlists
+- **Concurrent scanning**: Configurable parallel connections for speed
+- **Progress tracking**: Real-time progress bars during discovery
+- **API integration**: GitHub token support for enhanced organization discovery
+
+### 📊 Output Modes
+- **Human-readable tables**: Clean, formatted output by default
+- **Exit codes**: Automation-friendly return codes
+- **Verbose logging**: Debug and trace information
+- **Public key export**: Save derived public keys to files
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Using pipx (recommended)
+pipx install keychecker
+
+# Using pip
+pip install --user keychecker
+
+# From source
+git clone https://github.com/cyfinoid/keychecker
+cd keychecker
+pip install -e .
+```
+
+### Basic Usage
+
+```bash
+# Analyze a private key and Validate against servers (default behavior)
+keychecker ~/.ssh/id_ed25519
+
+# Validate against specific servers only
+keychecker ~/.ssh/id_ed25519 --validate github gitlab bitbucket codeberg gitea huggingface
+
+# Validate against specific servers only
+keychecker ~/.ssh/id_rsa --validate github gitlab huggingface
+
+# Skip server validation (local analysis only)
+keychecker ~/.ssh/id_ed25519 --no-validate
+```
+
+### Repository Discovery
+
+```bash
+# Discover private repositories on GitHub
+keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
+
+# Discover private repositories on Hugging Face
+keychecker ~/.ssh/id_rsa --validate huggingface --discovery repo_names.txt
+
+# With GitHub API token for enhanced organization discovery
+export GITHUB_TOKEN=ghp_your_token_here
+keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
+
+# Or pass token directly
+keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt --github-token ghp_your_token_here
+```
+
+---
+
+## 📖 Usage Reference
+
+### Command Line Options
+
+```bash
+keychecker INPUT [OPTIONS]
+
+Positional Arguments:
+  INPUT                 Path to private key file
+
+Options:
+  -i, --input PATH      Path to private key file (alternative to positional)
+  
+  --validate SERVERS    One or more servers to validate against
+                        Choices: github, gitlab, bitbucket, codeberg, gitea, huggingface
+  --no-validate         Skip server validation (local analysis only)
+  
+  --discovery FILE      Enable repository discovery with wordlist file
+  
+  --github-token TOKEN  GitHub API token for enhanced organization discovery
+  --no-progress         Disable progress bars during repository discovery
+  
+  --public-out FILE     Save derived public key to file
+  --no-banner           Suppress banner output
+  
+  --timeout SECONDS     Per-connection timeout (default: 5)
+  --concurrency N       Parallel connections (default: 10)
+  
+  -v, --verbose         Enable debug/trace logs
+  -h, --help            Show help message
+```
+
+### Examples
+
+```bash
+# Basic key analysis
+keychecker ~/.ssh/id_ed25519
+
+# Validate against GitHub only
+keychecker ~/.ssh/id_rsa --validate github
+
+# Validate against Hugging Face only
+keychecker ~/.ssh/id_rsa --validate huggingface
+
+# Discover repositories with custom wordlist
+keychecker ~/.ssh/id_rsa --validate github --discovery my_repos.txt
+
+# Discover repositories on Hugging Face
+keychecker ~/.ssh/id_rsa --validate huggingface --discovery my_repos.txt
+
+# Save public key to file
+keychecker ~/.ssh/id_ed25519 --public-out my_key.pub
+
+# Verbose output with custom timeout
+keychecker ~/.ssh/id_rsa --validate github --timeout 10 --verbose
+```
+
+---
+
+## 🌍 Supported Servers
+
+| Server | Host | Features | Notes |
+|--------|------|----------|-------|
+| **GitHub** | `git@github.com` | Username extraction, Organization discovery | Reveals username in SSH banner |
+| **GitLab** | `git@gitlab.com` | Username extraction | May require repo path for full discovery |
+| **Bitbucket** | `git@bitbucket.org` | Username extraction | Similar behavior to GitLab |
+| **Codeberg** | `git@codeberg.org` | Username extraction | Gitea-based platform |
+| **Gitea** | `git@gitea.com` | Username extraction | Self-hosted Git platform |
+| **Hugging Face** | `git@hf.co` | Username extraction | AI/ML model hosting platform |
+
+---
+
+## 📋 Example Output
+
+### Key Analysis
+```
+🔑 KeyChecker - SSH Key Analysis Tool
+=====================================
+
+Key: ~/.ssh/id_ed25519
+Type: ed25519
+Bits: 256
+Passphrase: NO
+Public: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... comment='user@hostname'
+Comment: user@hostname
+SHA256: SHA256:abc123...
+MD5: MD5:12:34:56:78:9a:bc:de:f0
+
+Insights: local_user=user, host=hostname
+```
+
+### Server Validation
+```
+Validation:
+- github: username=john_doe ✅
+- gitlab: username=jane_smith ✅
+- bitbucket: auth success, username=? (repo path required)
+- huggingface: username=anantshri ✅
+```
+
+### Repository Discovery
+```
+Organization Discovery:
+- Personal repositories: john_doe
+- Organizations: acme-corp, open-source-proj
+
+Repository Discovery:
+Found 3 accessible repositories:
+- john_doe/secret-project (private)
+- acme-corp/internal-tools (private)
+- acme-corp/api-service (private)
+```
+
+---
+
+## 🔐 Security Notes
+
+- **Read-only operations**: No repository access or write operations performed
+- **Local processing**: Private keys are processed in-memory, never uploaded
+- **Authorized use only**: Only use against keys you own or are authorized to test
+- **SSH handshake logging**: Some providers may log SSH connections - use responsibly
+- **Rate limiting**: Respect server rate limits during discovery operations
+
+---
+
+## 🛠 Development
+
+### Setup Development Environment
+
+```bash
+git clone https://github.com/cyfinoid/keychecker
+cd keychecker
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install in editable mode with development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest -q
+
+# Run demo
+python examples/demo.py
+```
+
+### Project Structure
+
+```
+keychecker/
+├── keychecker/
+│   ├── core/           # Core analysis and validation logic
+│   ├── plugins/        # Git hosting provider implementations
+│   ├── utils/          # Output formatting and utilities
+│   ├── cli.py          # Command-line interface
+│   └── __main__.py     # Entry point
+├── examples/           # Usage examples and sample data
+├── tests/              # Test suite
+└── docs/               # Documentation
+```
+
+### Adding New Providers
+
+KeyChecker uses a plugin architecture for Git hosting providers. To add a new provider:
+
+1. Create a new provider class in `keychecker/plugins/`
+2. Inherit from `BaseGitProvider`
+3. Implement required methods: `validate_key()`, `identify_user()`, `discover_organizations()`
+4. Register the provider in `keychecker/plugins/__init__.py`
+
+### Development Scripts
+
+The project includes shell scripts to automate common tasks:
+
+```bash
+# Set up development environment
+./scripts/setup-dev.sh
+
+# Run tests and quality checks
+./scripts/test.sh
+
+# Build package for distribution
+./scripts/build.sh
+
+# Update version number
+./scripts/version.sh 1.0.2
+
+# Publish to TestPyPI (for testing)
+export TESTPYPI_API_TOKEN=your_token
+./scripts/publish-testpypi.sh
+
+# Publish to PyPI
+export PYPI_API_TOKEN=your_token
+./scripts/publish-pypi.sh
+```
+
+See `scripts/README.md` for detailed script documentation.
+
+### GitHub Actions
+
+The project includes automated CI/CD workflows:
+
+- **CI Workflow**: Runs tests, linting, and builds on pull requests and pushes
+- **Publish Workflow**: Automatically publishes to PyPI on releases
+
+Set up these secrets in your GitHub repository:
+- `PYPI_API_TOKEN`: Your PyPI API token
+- `TESTPYPI_API_TOKEN`: Your TestPyPI API token
+
+---
+
+## 📊 Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | Runtime/IO/argument error |
+| `2` | All servers unreachable |
+| `3` | Repository discovery attempted, no repositories found |
+| `4` | Key parsed but flagged (deprecated/insecure) |
+
+---
+
+## 🗺️ Roadmap
+
+- **Self-hosted environments**: Support for custom GitLab, Bitbucket, and Gitea instances
+- **Arbitrary hosts**: Generic SSH server validation with custom host/port configuration
+- **Host discovery**: Automatic detection of Git server type and capabilities
+- **Cloud Git platforms**: Support for Azure DevOps, AWS CodeCommit, Google Cloud Source Repositories
+- **Enterprise platforms**: Integration with enterprise Git solutions
+- **Public repository filtering**: Skip public repositories during discovery (no point in bruteforcing)
+- **Intelligent wordlists**: Generate repository name candidates based on discovered organizations
+- **Rate limit awareness**: Adaptive discovery speed based on server rate limits
+
+### Quality of Life Improvement
+
+- **OIDC Publication**: Move publication and release to OIDC aware setup
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite: `pytest`
+6. Submit a pull request
+
+---
+
+## 📄 License
+
+This project is licensed under the GNU General Public License v3 (GPLv3) - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## ⚠️ Disclaimer
+
+This tool is designed for security auditing and penetration testing of systems you own or have explicit permission to test. Always ensure you have proper authorization before using this tool against any systems or keys you don't own.
+
+The authors are not responsible for any misuse of this software.

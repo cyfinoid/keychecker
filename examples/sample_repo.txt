@@ -1,0 +1,6 @@
+secret
+home
+dotfiles
+examples
+profile
+resume

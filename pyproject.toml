@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "keychecker"
+version = "1.0.1"
+authors = [
+    {name = "KeyChecker Team", email = "contact@keychecker.dev"},
+]
+description = "A fast CLI to fingerprint SSH private keys and identify which Git hosting accounts they unlock"
+readme = "Readme.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE.md"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers", 
+    "Intended Audience :: System Administrators",
+
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+keywords = ["ssh", "key", "fingerprint", "git", "github", "gitlab", "bitbucket", "security", "audit"]
+dependencies = [
+    "cryptography>=41.0.0",
+    "asyncssh>=2.13.0",
+    "aiohttp>=3.8.0",
+    "tqdm>=4.64.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0", 
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "types-tqdm>=4.0.0",
+]
+
+[project.scripts]
+keychecker = "keychecker.cli:main"
+
+[project.urls]
+"Homepage" = "https://github.com/cyfinoid/keychecker"
+"Bug Reports" = "https://github.com/cyfinoid/keychecker/issues"
+"Source" = "https://github.com/cyfinoid/keychecker"
+"Documentation" = "https://github.com/cyfinoid/keychecker#readme"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
