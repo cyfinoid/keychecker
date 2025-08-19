@@ -336,12 +336,40 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ### Development Setup
 
+#### Option 1: Using uv (Recommended - Faster)
+```bash
+# Clone and setup
+git clone https://github.com/cyfinoid/keychecker
+cd keychecker
+
+# Install uv and setup development environment
+./scripts/install-uv.sh
+./scripts/setup-dev-uv.sh
+
+# Run tests
+./scripts/test-uv.sh
+```
+
+#### Option 2: Using pip (Traditional)
+```bash
+# Clone and setup
+git clone https://github.com/cyfinoid/keychecker
+cd keychecker
+./scripts/setup-dev.sh
+
+# Run tests
+./scripts/test.sh
+```
+
+#### Development Workflow
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Add tests for new functionality
-5. Run the test suite: `pytest`
+5. Run the test suite: `./scripts/test-uv.sh` (or `./scripts/test.sh`)
 6. Submit a pull request
+
+For detailed development instructions, see [scripts/README.md](scripts/README.md).
 
 ---
 

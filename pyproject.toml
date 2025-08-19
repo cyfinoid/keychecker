@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A fast CLI to fingerprint SSH private keys and identify which Git hosting accounts they unlock"
 readme = "Readme.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE.md"}
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,11 +19,11 @@ classifiers = [
 
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Security",
     "Topic :: Software Development :: Version Control :: Git",
     "Topic :: System :: Systems Administration",
@@ -31,20 +31,22 @@ classifiers = [
 ]
 keywords = ["ssh", "key", "fingerprint", "git", "github", "gitlab", "bitbucket", "security", "audit"]
 dependencies = [
-    "cryptography>=41.0.0",
-    "asyncssh>=2.13.0",
-    "aiohttp>=3.8.0",
-    "tqdm>=4.64.0",
+    "cryptography>=45.0.6",
+    "asyncssh>=2.21.0",
+    "aiohttp>=3.12.15",
+    "tqdm>=4.67.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "black>=23.0.0", 
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "black>=25.1.0", 
+    "flake8>=7.3.0",
+    "mypy>=1.17.1",
     "types-tqdm>=4.0.0",
+    "bandit>=1.7.0",
+    "safety>=2.0.0",
 ]
 
 [project.scripts]
@@ -72,3 +74,16 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+# uv-specific configurations
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "black>=25.1.0", 
+    "flake8>=7.3.0",
+    "mypy>=1.17.1",
+    "types-tqdm>=4.0.0",
+    "bandit>=1.7.0",
+    "safety>=2.0.0",
+]
