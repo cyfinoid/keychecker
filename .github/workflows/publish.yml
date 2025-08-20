@@ -10,13 +10,14 @@ on:
         required: true
         default: '1.0.1'
 
-# Security: Explicit permissions for all jobs
-permissions:
-  contents: read
+# Security: No default permissions - each job specifies its own
+permissions: {}
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Required to checkout repository contents
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
@@ -85,6 +86,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read  # Required to checkout repository contents
     
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
@@ -119,6 +122,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
+    permissions:
+      contents: read  # Required to checkout repository contents
     
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
