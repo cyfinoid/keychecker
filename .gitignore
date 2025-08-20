@@ -112,7 +112,6 @@ venv.bak/
 
 # uv (Python package manager)
 .uv/
-uv.lock
 
 # Spyder project settings
 .spyderproject
