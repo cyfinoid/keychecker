@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+# Security: Explicit permissions for all jobs
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -57,6 +61,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # Required for uploading artifacts
     
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2

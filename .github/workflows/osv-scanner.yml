@@ -21,11 +21,10 @@ on:
   push:
     branches: [ "main" ]
 
+# Security: Explicit permissions for vulnerability scanning
 permissions:
-  # Require writing security events to upload SARIF file to security tab
-  security-events: write
-  # Read commit contents
-  contents: read
+  contents: read        # Required to checkout repository contents
+  security-events: write  # Required to upload SARIF results to Security tab
 
 jobs:
   scan-scheduled:
