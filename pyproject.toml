@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "keychecker"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
     {name = "KeyChecker Team", email = "contact@keychecker.dev"},
 ]
@@ -46,7 +46,7 @@ dev = [
     "mypy>=1.17.1",
     "types-tqdm>=4.0.0",
     "bandit>=1.7.0",
-    "safety>=2.0.0",
+    "pip-audit>=2.6.0",
 ]
 
 [project.scripts]
@@ -86,5 +86,5 @@ dev-dependencies = [
     "mypy>=1.17.1",
     "types-tqdm>=4.0.0",
     "bandit>=1.7.0",
-    "safety>=2.0.0",
+    "pip-audit>=2.6.0",
 ]

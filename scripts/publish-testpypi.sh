@@ -36,6 +36,10 @@ if [ -z "$TESTPYPI_API_TOKEN" ]; then
     fi
 fi
 
+# Final verification
+echo "🔍 Running final verification..."
+./scripts/test.sh
+
 # Upload to TestPyPI
 echo "📤 Uploading to TestPyPI..."
 uv run twine upload --repository testpypi dist/*

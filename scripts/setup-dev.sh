@@ -85,7 +85,7 @@ uv pip install -e ".[dev]"
 
 # Install additional development tools
 echo "🔧 Installing additional development tools..."
-uv pip install bandit safety
+uv pip install bandit pip-audit
 
 # Generate lock file for reproducible builds
 echo "🔒 Generating lock file..."
@@ -106,7 +106,8 @@ uv run mypy keychecker/
 # Run security checks
 echo "🔒 Running security checks..."
 uv run bandit -r keychecker/ || echo "⚠️  Bandit found some issues (check output above)"
-uv run safety check || echo "⚠️  Safety found some issues (check output above)"
+uv run pip-audit --skip-editable || echo "⚠️  pip-audit found some vulnerabilities (check output above)"
+uv run pip-audit -r requirements-uv.txt || echo "⚠️  pip-audit found vulnerabilities in uv requirements"
 
 echo ""
 echo "✅ Development environment setup completed!"

@@ -120,7 +120,7 @@ class GitHubProvider(BaseGitProvider):
                     return api_orgs
             except Exception:
                 # Fall back to heuristic approach if API fails
-                pass
+                pass  # nosec B110
 
         # Fallback: Heuristic approach
         return await self._discover_organizations_heuristic(private_key_path, username)
@@ -211,7 +211,7 @@ class GitHubProvider(BaseGitProvider):
                             organizations.append(org_name)
                             break  # Found one accessible repo, org exists
                     except Exception:
-                        continue  # Try next repo
+                        continue  # Try next repo  # nosec B112
 
         # Test common patterns concurrently
         tasks = [test_organization(org) for org in common_patterns]
@@ -255,7 +255,7 @@ class GitHubProvider(BaseGitProvider):
                         discovery_method = "api"
                 except Exception:
                     # Fall back to heuristic approach if API fails
-                    pass
+                    pass  # nosec B110
 
             # If API didn't work, try heuristic
             if not organizations:

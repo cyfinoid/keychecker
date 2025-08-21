@@ -165,7 +165,7 @@ class HuggingFaceProvider(BaseGitProvider):
                             organizations.append(org_name)
                             break  # Found one accessible repo, org exists
                     except Exception:
-                        continue
+                        continue  # nosec B112
 
         # Test organizations concurrently
         tasks = [test_organization(org) for org in common_patterns]

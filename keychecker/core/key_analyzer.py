@@ -70,7 +70,7 @@ class SSHKeyAnalyzer:
                 continue
             except Exception:
                 # Other error, try next loader
-                continue
+                continue  # nosec B112
 
         if private_key is None and passphrase_protected:
             # We can still analyze the key structure without decrypting
@@ -178,7 +178,8 @@ class SSHKeyAnalyzer:
                             if algorithm.startswith("ssh-"):
                                 key_type = self.key_types.get(algorithm, algorithm)
                 except Exception:
-                    pass
+                    # Failed to parse embedded public key, continue with detection
+                    pass  # nosec B110
         elif "BEGIN RSA PRIVATE KEY" in key_data_str:
             key_type = "rsa"
             algorithm = "ssh-rsa"
@@ -304,7 +305,8 @@ class SSHKeyAnalyzer:
                     if len(parts) >= 3:
                         return str(parts[2])
             except Exception:
-                pass
+                # Failed to read companion .pub file, return None
+                pass  # nosec B110
 
         # Try to extract from the public key string itself
         parts = public_key_str.split(" ", 2)
@@ -330,11 +332,15 @@ class SSHKeyAnalyzer:
                 fingerprint = base64.b64encode(digest).decode("utf-8").rstrip("=")
                 return f"SHA256:{fingerprint}"
             elif hash_type == "md5":
-                digest = hashlib.md5(key_data).digest()
+                # MD5 is used here for SSH key fingerprint compatibility, not security
+                digest = hashlib.md5(
+                    key_data, usedforsecurity=False
+                ).digest()  # nosec B324
                 fingerprint = ":".join(f"{b:02x}" for b in digest)
                 return f"MD5:{fingerprint}"
         except Exception:
-            pass
+            # Fingerprint generation failed, return None to indicate unavailable
+            pass  # nosec B110
 
         return None
 

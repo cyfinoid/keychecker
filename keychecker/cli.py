@@ -293,8 +293,8 @@ async def run_analysis(args: Any) -> int:
             try:
                 await validator.cleanup()
             except Exception:
-                # Ignore cleanup errors
-                pass
+                # Ignore cleanup errors - cleanup is best effort
+                pass  # nosec B110
 
 
 def validate_args(args: Any) -> None:

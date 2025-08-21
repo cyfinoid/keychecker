@@ -37,7 +37,8 @@ Sets up the complete development environment using `uv` for fast dependency mana
   - If no virtual environment exists: creates a new one with `uv venv`
   - **Safety check:** Ensures we're in a virtual environment before installing packages (prevents `--break-system-packages` issues)
 - Installs package in editable mode with development dependencies
-- Installs additional development tools (bandit, safety)
+- Installs additional development tools (bandit, pip-audit)
+- Runs vulnerability scanning on dependencies (excludes local editable package)
 - Generates lock file for reproducible builds
 - Runs initial tests and checks
 
@@ -105,7 +106,7 @@ Runs all tests and quality checks using `uv` for fast execution.
 - Runs flake8 linting
 - Runs mypy type checking
 - Runs pytest with coverage
-- Runs security checks with bandit and safety
+- Runs security checks with bandit and pip-audit (skips editable packages)
 
 
 
