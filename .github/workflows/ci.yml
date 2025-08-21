@@ -80,7 +80,7 @@ jobs:
       run: uv python install 3.9  # Use minimum supported version for build
     
     - name: Install build dependencies
-      run: uv tool install build twine
+      run: uv tool install twine
     
     - name: Build package
       run: uv build
