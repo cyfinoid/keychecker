@@ -55,7 +55,7 @@ if command -v uv &> /dev/null; then
     echo "✅ uv installed successfully: $(uv --version)"
     echo ""
     echo "🎉 You can now set up the development environment:"
-    echo "   ./scripts/setup-dev-uv.sh"
+echo "   ./scripts/setup-dev.sh"
 else
     echo "❌ uv installation failed"
     echo "Please install uv manually:"

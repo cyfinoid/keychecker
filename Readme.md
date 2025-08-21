@@ -42,16 +42,20 @@ _A fast CLI tool to fingerprint SSH private keys and identify which Git hosting 
 ### Installation
 
 ```bash
-# Using pipx (recommended)
+# Using pipx (recommended for end users)
 pipx install keychecker
 
-# Using pip
+# Using uv (recommended for developers)
+uv add keychecker
+
+# Using pip (legacy)
 pip install --user keychecker
 
-# From source
+# From source (development)
 git clone https://github.com/cyfinoid/keychecker
 cd keychecker
-pip install -e .
+./scripts/install.sh           # Install uv first
+./scripts/setup-dev.sh         # Set up development environment
 ```
 
 ### Basic Usage
@@ -222,18 +226,17 @@ Found 3 accessible repositories:
 git clone https://github.com/cyfinoid/keychecker
 cd keychecker
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Install uv (if not already installed)
+./scripts/install.sh
 
-# Install in editable mode with development dependencies
-pip install -e ".[dev]"
+# Set up development environment
+./scripts/setup-dev.sh
 
 # Run tests
-pytest -q
+./scripts/test.sh
 
 # Run demo
-python examples/demo.py
+uv run python examples/demo.py
 ```
 
 ### Project Structure
@@ -265,11 +268,17 @@ KeyChecker uses a plugin architecture for Git hosting providers. To add a new pr
 The project includes shell scripts to automate common tasks:
 
 ```bash
+# Install uv (if needed)
+./scripts/install.sh
+
 # Set up development environment
 ./scripts/setup-dev.sh
 
 # Run tests and quality checks
 ./scripts/test.sh
+
+# Clean development environment
+./scripts/clean.sh
 
 # Build package for distribution
 ./scripts/build.sh
@@ -336,25 +345,13 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ### Development Setup
 
-#### Option 1: Using uv (Recommended - Faster)
 ```bash
 # Clone and setup
 git clone https://github.com/cyfinoid/keychecker
 cd keychecker
 
 # Install uv and setup development environment
-./scripts/install-uv.sh
-./scripts/setup-dev-uv.sh
-
-# Run tests
-./scripts/test-uv.sh
-```
-
-#### Option 2: Using pip (Traditional)
-```bash
-# Clone and setup
-git clone https://github.com/cyfinoid/keychecker
-cd keychecker
+./scripts/install.sh
 ./scripts/setup-dev.sh
 
 # Run tests
@@ -366,7 +363,7 @@ cd keychecker
 2. Create a feature branch
 3. Make your changes
 4. Add tests for new functionality
-5. Run the test suite: `./scripts/test-uv.sh` (or `./scripts/test.sh`)
+5. Run the test suite: `./scripts/test.sh`
 6. Submit a pull request
 
 For detailed development instructions, see [scripts/README.md](scripts/README.md).
