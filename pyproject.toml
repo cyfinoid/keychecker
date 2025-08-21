@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "keychecker"
 version = "1.0.2"
 authors = [
-    {name = "KeyChecker Team", email = "contact@keychecker.dev"},
+    {name = "Cyfinoid Research", email = "keychecker@cyfinoid.com"},
 ]
 description = "A fast CLI to fingerprint SSH private keys and identify which Git hosting accounts they unlock"
 readme = "Readme.md"
