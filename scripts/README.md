@@ -85,7 +85,8 @@ Cross-platform uv installation script.
 
 **What it does:**
 - Detects OS and uses appropriate installation method
-- Supports macOS (Homebrew/curl), Linux (curl), and Windows (pip)
+- Supports macOS (Homebrew/curl), Linux (curl), and Windows (pip with hashes)
+- Uses pinned version with cryptographic hashes for security on Windows
 - Verifies installation and provides next steps
 
 
@@ -177,6 +178,7 @@ export PYPI_API_TOKEN=your_token_here
 
 - Python 3.8+
 - uv (install with: `./scripts/install.sh`)
+  - Version: 0.8.12 (pinned with cryptographic hashes in `requirements-uv.txt`)
 
 ### Environment Variables
 For publishing scripts, you need to set these environment variables:

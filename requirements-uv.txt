@@ -1,0 +1,31 @@
+# uv requirements file with hashes for secure installation
+# This file specifies the exact version of uv to install with cryptographic hashes
+# Generated for uv version that meets the requirement in pyproject.toml: >=0.8.2
+#
+# To update this file:
+# 1. Check latest uv version: python3 -c "import urllib.request, json; print(json.loads(urllib.request.urlopen('https://pypi.org/pypi/uv/json').read())['info']['version'])"
+# 2. Generate hashes: python3 script (see install.sh for example)
+# 3. Update this file with new version and hashes
+#
+# Last updated: 2025-01-27
+# uv 0.8.12 - latest version that meets minimum requirement from pyproject.toml
+uv==0.8.12 \
+    --hash=sha256:d53de2398d664a325848e952f1d88d88d0564773effb55b9cb279ed4826d61e0 \
+    --hash=sha256:9c75edaef18a1eb536e4f3ce21ab400f3420c4a22e081f57d5343e14b5064cde \
+    --hash=sha256:43abe9466446330b991a9c0702853d8f13ce68b47a6c94a439e42eb349f6c85e \
+    --hash=sha256:533af0f2392b391a09ddda3c7e9f9246a3aca3ecbfd54e20e7a6e13120d5682f \
+    --hash=sha256:01d68712d682ea770a2ed6e85c06de3ef50253933c7a84d8961dcb8f438a9de2 \
+    --hash=sha256:9aba50b617622f5931c7ec4e81a14517e84efb343233c4976689a372e7e4fd98 \
+    --hash=sha256:9c2c8b7ee57aaf7dd765ed4c5e864561d5b37e36265d5e082bc6ac0e88332708 \
+    --hash=sha256:e850ef65d37acd7c762f544ec960939f17a846926bb985085020f6244e73f9ee \
+    --hash=sha256:ac70a29b6c135cb77ad045315a17d976175bc92115ef751f7fc9bcd8be23b4ee \
+    --hash=sha256:0febae768d9fa3968957cf918e0daf6d0e7026946640c5967b69b7fa7dc19a83 \
+    --hash=sha256:887892cd8242c24d630b47ac14a632547f7ed6af95a4be2c214beaa9e0f57c13 \
+    --hash=sha256:b874d62e85b155e9fa5056d780a4dc14cd27b39d6a8147c5bd677b5cb1dad41c \
+    --hash=sha256:52f5bdb7c9df0139dd64d1718261a9effa5c7602871a4726a573f7aa74c9ce48 \
+    --hash=sha256:449eb6465e02b929a7c512ab50812336aec231b68608299f8b45ba38fdcc5eb6 \
+    --hash=sha256:7a590cd21ae678db703a5059d455106198310ba64131733cebac77b37e2d88f9 \
+    --hash=sha256:6e8554da8efd022c8cebf843166500b234e30efdcaaa6a30c58dcae125a1bbb9 \
+    --hash=sha256:51681666b3c30f764c1c7829dd6ca79d51506737a2058cc57b06028b9f6db34b \
+    --hash=sha256:0039141789ed96242dd6a48b10500138beafc2a63df0a4676363dceec4064d99 \
+    --hash=sha256:c06788fccf8057173d6f76018399fbee757a1f06fe0041acbe27aa74322374f5

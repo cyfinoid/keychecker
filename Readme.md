@@ -54,7 +54,7 @@ pip install --user keychecker
 # From source (development)
 git clone https://github.com/cyfinoid/keychecker
 cd keychecker
-./scripts/install.sh           # Install uv first
+./scripts/install.sh           # Install uv with pinned version & hashes
 ./scripts/setup-dev.sh         # Set up development environment
 ```
 

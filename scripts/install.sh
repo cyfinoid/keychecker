@@ -38,14 +38,19 @@ case "$OS" in
         ;;
     "MINGW"*|"MSYS"*|"CYGWIN"*)
         echo "🪟 Installing uv on Windows..."
-        echo "📦 Using pip (recommended for Windows)..."
-        pip install uv
+        echo "📦 Using pip with pinned version and hashes..."
+        if [ -f "requirements-uv.txt" ]; then
+            pip install --require-hashes -r requirements-uv.txt
+        else
+            echo "⚠️  requirements-uv.txt not found, using fallback installation..."
+            pip install uv==0.8.12
+        fi
         ;;
     *)
         echo "❌ Unsupported operating system: $OS"
         echo "Please install uv manually:"
         echo "  - Visit: https://docs.astral.sh/uv/getting-started/installation/"
-        echo "  - Or use: pip install uv"
+        echo "  - Or use: pip install --require-hashes -r requirements-uv.txt"
         exit 1
         ;;
 esac
@@ -60,6 +65,6 @@ else
     echo "❌ uv installation failed"
     echo "Please install uv manually:"
     echo "  - Visit: https://docs.astral.sh/uv/getting-started/installation/"
-    echo "  - Or use: pip install uv"
+    echo "  - Or use: pip install --require-hashes -r requirements-uv.txt"
     exit 1
 fi
