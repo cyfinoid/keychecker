@@ -7,17 +7,24 @@ set -e
 
 echo "🔨 Building KeyChecker package..."
 
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    echo "❌ Error: uv is not installed"
+    echo "Please run ./scripts/install.sh first"
+    exit 1
+fi
+
 # Clean previous builds
 echo "🧹 Cleaning previous builds..."
 rm -rf build/ dist/ *.egg-info/
 
-# Build package
+# Build package using uv
 echo "📦 Building package..."
-python3 -m build
+uv build
 
-# Check package
+# Check package using uv
 echo "✅ Checking package..."
-python3 -m twine check dist/*
+uv run twine check dist/*
 
 # Show build results
 echo "📋 Build results:"

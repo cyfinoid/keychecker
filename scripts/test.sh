@@ -1,28 +1,50 @@
 #!/bin/bash
 
-# Test script for KeyChecker using uv
-# This script runs all tests and quality checks using uv for faster execution
+# Test script for KeyChecker
+# This script runs all tests and quality checks using uv for fast execution
 
 set -e
 
-echo "🧪 Running KeyChecker tests and quality checks with uv..."
+echo "🧪 Running KeyChecker tests and quality checks..."
 
 # Check if uv is installed
 if ! command -v uv &> /dev/null; then
     echo "❌ Error: uv is not installed"
-    echo "Please install uv first: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "Please run ./scripts/install.sh first"
     exit 1
 fi
 
-# Check if virtual environment exists
-if [ ! -d ".venv" ]; then
+# Function to activate virtual environment
+activate_venv() {
+    echo "🔧 Activating virtual environment..."
+    source .venv/bin/activate
+    
+    # Verify activation worked
+    if [[ -z "$VIRTUAL_ENV" ]]; then
+        echo "❌ Error: Failed to activate virtual environment"
+        exit 1
+    fi
+}
+
+# Check virtual environment status
+if [[ -n "$VIRTUAL_ENV" ]]; then
+    echo "✅ Already in virtual environment: $VIRTUAL_ENV"
+elif [[ -d ".venv" ]]; then
+    echo "📦 Virtual environment exists, activating..."
+    activate_venv
+else
     echo "❌ Error: Virtual environment not found"
-    echo "Please run ./scripts/setup-dev-uv.sh first"
+    echo "🔧 To fix this, run:"
+    echo "   ./scripts/setup-dev.sh    # Set up development environment"
     exit 1
 fi
 
-# Activate virtual environment
-source .venv/bin/activate
+# Double-check we're in a virtual environment before proceeding
+if [[ -z "$VIRTUAL_ENV" ]]; then
+    echo "❌ Error: Not in a virtual environment. This is required to avoid system package conflicts."
+    echo "🔧 Please run: ./scripts/setup-dev.sh"
+    exit 1
+fi
 
 echo "🔍 Running code formatting check..."
 uv run black --check --diff . || {

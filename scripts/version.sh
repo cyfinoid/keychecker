@@ -22,8 +22,15 @@ fi
 
 echo "🔄 Updating version to $NEW_VERSION..."
 
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    echo "❌ Error: uv is not installed"
+    echo "Please run ./scripts/install.sh first"
+    exit 1
+fi
+
 # Get current version
-CURRENT_VERSION=$(python3 -c "import keychecker; print(keychecker.__version__)")
+CURRENT_VERSION=$(uv run python -c "import keychecker; print(keychecker.__version__)")
 echo "📋 Current version: $CURRENT_VERSION"
 echo "📋 New version: $NEW_VERSION"
 
@@ -39,7 +46,7 @@ rm keychecker/__init__.py.bak
 
 # Verify the changes
 echo "✅ Verifying version update..."
-NEW_VERSION_CHECK=$(python3 -c "import keychecker; print(keychecker.__version__)")
+NEW_VERSION_CHECK=$(uv run python -c "import keychecker; print(keychecker.__version__)")
 if [ "$NEW_VERSION_CHECK" = "$NEW_VERSION" ]; then
     echo "✅ Version successfully updated to $NEW_VERSION"
 else
@@ -52,7 +59,7 @@ echo "🧹 Cleaning previous builds..."
 rm -rf build/ dist/ *.egg-info/
 
 echo "📦 Building package with new version..."
-python3 -m build
+uv build
 
 echo "✅ Version update completed successfully!"
 echo "📋 New distribution files created in dist/ directory"

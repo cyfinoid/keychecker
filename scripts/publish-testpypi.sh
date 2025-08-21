@@ -8,9 +8,16 @@ set -e
 echo "🚀 Publishing KeyChecker to TestPyPI..."
 
 # Check if required tools are installed
-if ! command -v twine &> /dev/null; then
-    echo "❌ Error: twine is not installed"
-    echo "   Install with: pip install twine"
+if ! command -v uv &> /dev/null; then
+    echo "❌ Error: uv is not installed"
+    echo "Please run ./scripts/install.sh first"
+    exit 1
+fi
+
+# Check if twine is available
+if ! uv run twine --version &> /dev/null; then
+    echo "❌ Error: twine is not installed in the virtual environment"
+    echo "Please run ./scripts/setup-dev.sh first"
     exit 1
 fi
 
@@ -27,7 +34,7 @@ fi
 
 # Upload to TestPyPI
 echo "📤 Uploading to TestPyPI..."
-twine upload --repository testpypi dist/*
+uv run twine upload --repository testpypi dist/*
 
 echo "✅ Successfully published to TestPyPI!"
 echo "🔗 Package available at: https://test.pypi.org/project/keychecker/"

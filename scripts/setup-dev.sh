@@ -38,13 +38,46 @@ fi
 PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
 echo "🐍 Python version: $PYTHON_VERSION"
 
-# Create virtual environment using uv
-echo "📦 Creating virtual environment with uv..."
-uv venv
+# Check virtual environment status
+echo "🔍 Checking virtual environment status..."
 
-# Activate virtual environment
-echo "🔧 Activating virtual environment..."
-source .venv/bin/activate
+# Function to activate virtual environment
+activate_venv() {
+    echo "🔧 Activating virtual environment..."
+    source .venv/bin/activate
+    
+    # Verify activation worked
+    if [[ -z "$VIRTUAL_ENV" ]]; then
+        echo "❌ Error: Failed to activate virtual environment"
+        exit 1
+    fi
+    echo "✅ Virtual environment activated: $VIRTUAL_ENV"
+}
+
+# Check if we're already in a virtual environment
+if [[ -n "$VIRTUAL_ENV" ]]; then
+    echo "✅ Already in virtual environment: $VIRTUAL_ENV"
+elif [[ -d ".venv" ]]; then
+    echo "📦 Virtual environment exists, activating..."
+    activate_venv
+else
+    echo "📦 Creating new virtual environment with uv..."
+    uv venv
+    activate_venv
+fi
+
+# Double-check we're in a virtual environment before proceeding
+if [[ -z "$VIRTUAL_ENV" ]]; then
+    echo "❌ Error: Not in a virtual environment. This is required to avoid system package conflicts."
+    echo ""
+    echo "🔧 To fix this, run:"
+    echo "   ./scripts/setup-dev.sh    # This script should handle it automatically"
+    echo "   # OR manually:"
+    echo "   uv venv                   # Create virtual environment"
+    echo "   source .venv/bin/activate # Activate it"
+    echo "   ./scripts/setup-dev.sh    # Run this script again"
+    exit 1
+fi
 
 # Install package in editable mode with development dependencies
 echo "📦 Installing package in editable mode with uv..."

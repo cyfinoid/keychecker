@@ -31,7 +31,11 @@ Sets up the complete development environment using `uv` for fast dependency mana
 
 **What it does:**
 - Checks for `uv` installation and provides installation instructions
-- Creates virtual environment using `uv`
+- **Smart virtual environment handling:**
+  - If already in a virtual environment: continues with that environment
+  - If `.venv` exists but not activated: activates the existing environment
+  - If no virtual environment exists: creates a new one with `uv venv`
+  - **Safety check:** Ensures we're in a virtual environment before installing packages (prevents `--break-system-packages` issues)
 - Installs package in editable mode with development dependencies
 - Installs additional development tools (bandit, safety)
 - Generates lock file for reproducible builds
@@ -321,7 +325,28 @@ To set up the development environment:
    ./scripts/setup-dev.sh
    ```
 
-5. **Token Issues**: Ensure API tokens are set correctly
+5. **Virtual Environment Issues**: The setup script handles virtual environments automatically, but if you encounter issues:
+   ```bash
+   # Clean and recreate virtual environment
+   ./scripts/clean.sh --all
+   ./scripts/setup-dev.sh
+   
+   # Or manually:
+   rm -rf .venv
+   uv venv
+   source .venv/bin/activate
+   ./scripts/setup-dev.sh
+   ```
+
+6. **`--break-system-packages` Error**: This shouldn't happen with our scripts since we use virtual environments, but if it does:
+   ```bash
+   # Ensure you're in a virtual environment
+   echo $VIRTUAL_ENV  # Should show a path
+   # If empty, run:
+   ./scripts/setup-dev.sh
+   ```
+
+7. **Token Issues**: Ensure API tokens are set correctly
    ```bash
    echo $PYPI_API_TOKEN
    echo $TESTPYPI_API_TOKEN

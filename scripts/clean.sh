@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Clean uv virtual environment script for KeyChecker
-# This script cleans the uv virtual environment and related files
+# Clean development environment script for KeyChecker
+# This script cleans the virtual environment and related files
 
 set -e
 
-echo "🧹 Cleaning KeyChecker uv development environment..."
+echo "🧹 Cleaning KeyChecker development environment..."
 
 # Function to show usage
 show_usage() {
@@ -14,13 +14,13 @@ show_usage() {
     echo "Options:"
     echo "  --venv-only     Clean only the virtual environment (default)"
     echo "  --all           Clean virtual environment, lock file, and cache"
-    echo "  --cache-only    Clean only uv cache"
+    echo "  --cache-only    Clean only cache"
     echo "  --help          Show this help message"
     echo ""
     echo "Examples:"
     echo "  $0              # Clean virtual environment only"
     echo "  $0 --all        # Clean everything (venv, lock, cache)"
-    echo "  $0 --cache-only # Clean only uv cache"
+    echo "  $0 --cache-only # Clean only cache"
 }
 
 # Parse command line arguments
@@ -92,9 +92,13 @@ fi
 
 # Clean uv cache
 if [ "$CLEAN_CACHE" = true ]; then
-    echo "🗑️  Cleaning uv cache..."
-    uv cache clean
-    echo "✅ uv cache cleaned"
+    if command -v uv &> /dev/null; then
+        echo "🗑️  Cleaning uv cache..."
+        uv cache clean
+        echo "✅ uv cache cleaned"
+    else
+        echo "ℹ️  uv not found, skipping cache clean"
+    fi
 fi
 
 # Clean pytest cache
@@ -150,7 +154,7 @@ if [ "$CLEAN_LOCK" = true ]; then
     echo "   - Lock file (uv.lock)"
 fi
 if [ "$CLEAN_CACHE" = true ]; then
-    echo "   - uv cache"
+    echo "   - Cache files"
 fi
 echo "   - pytest cache (.pytest_cache)"
 echo "   - coverage reports (htmlcov)"
@@ -159,4 +163,4 @@ echo "   - build artifacts (build/, dist/, *.egg-info)"
 
 echo ""
 echo "🔄 To recreate the development environment:"
-echo "   ./scripts/setup-dev-uv.sh"
+echo "   ./scripts/setup-dev.sh"
