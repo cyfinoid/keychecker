@@ -26,10 +26,14 @@ echo "🔨 Building package..."
 ./scripts/build.sh
 
 # Check if TestPyPI token is set
+# Check if TESTPYPI_API_TOKEN is set or if ~/.pypirc has [testpypi] section
 if [ -z "$TESTPYPI_API_TOKEN" ]; then
-    echo "❌ Error: TESTPYPI_API_TOKEN environment variable is not set"
-    echo "   Set it with: export TESTPYPI_API_TOKEN=your_token_here"
-    exit 1
+    if ! grep -q "^\[testpypi\]" ~/.pypirc 2>/dev/null; then
+        echo "❌ Error: TESTPYPI_API_TOKEN environment variable is not set and no [testpypi] section found in ~/.pypirc"
+        echo "   Set it with: export TESTPYPI_API_TOKEN=your_token_here"
+        echo "   Or configure ~/.pypirc with [testpypi] credentials"
+        exit 1
+    fi
 fi
 
 # Upload to TestPyPI

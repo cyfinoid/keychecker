@@ -27,9 +27,12 @@ echo "🔨 Building package..."
 
 # Check if PyPI token is set
 if [ -z "$PYPI_API_TOKEN" ]; then
-    echo "❌ Error: PYPI_API_TOKEN environment variable is not set"
-    echo "   Set it with: export PYPI_API_TOKEN=your_token_here"
-    exit 1
+    if ! grep -q "^\[pypi\]" ~/.pypirc 2>/dev/null; then
+        echo "❌ Error: PYPI_API_TOKEN environment variable is not set and no [pypi] section found in ~/.pypirc"
+        echo "   Set it with: export PYPI_API_TOKEN=your_token_here"
+        echo "   Or configure ~/.pypirc with [pypi] credentials"
+        exit 1
+    fi
 fi
 
 # Final verification

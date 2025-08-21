@@ -65,7 +65,7 @@ uv run mypy keychecker/ || {
 }
 
 echo "🧪 Running tests with coverage..."
-uv run pytest -v --cov=keychecker --cov-report=term-missing --cov-report=html tests/
+uv run pytest -v tests/
 
 echo "🔒 Running security checks..."
 echo "Running bandit security scan..."
