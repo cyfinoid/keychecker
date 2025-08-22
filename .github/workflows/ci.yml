@@ -94,12 +94,14 @@ jobs:
       if: always()
       with:
         sarif_file: results.sarif
+        category: bandit
     
     - name: Run pip-audit vulnerability scan
       uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
       with:
         virtual-environment: .venv
-        
+        # Note: This action doesn't produce SARIF output, so results appear in CI logs only
+
   build:
     needs: [test, lint, security]
     runs-on: ubuntu-latest
