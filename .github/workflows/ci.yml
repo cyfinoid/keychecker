@@ -88,7 +88,12 @@ jobs:
         exclude: "./tests/,./scripts/,./__pycache__,./*.pyc,./.git/"
             
     - name: Export dependencies for pip-audit
-      run: uv export --no-dev > requirements-for-audit.txt
+      run: |
+        # Export dependencies without the current project (no editable install)
+        uv export --no-dev --no-editable > requirements-for-audit.txt
+        # Show what we're auditing for debugging
+        echo "Dependencies to audit:"
+        cat requirements-for-audit.txt
       
     - name: Run pip-audit vulnerability scan
       uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
