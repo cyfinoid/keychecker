@@ -104,16 +104,48 @@ jobs:
     - name: Build package
       run: uv build
     
+    - name: Install pipx for testing
+      run: uv tool install pipx
+    
     - name: Publish to TestPyPI
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TESTPYPI_API_TOKEN }}
       run: uv tool run twine upload --repository testpypi dist/*
     
-    - name: Test installation from TestPyPI
+    - name: Test installation methods from TestPyPI
       run: |
+        echo "🧪 Testing installation with multiple package managers..."
+        
+        # Test 1: pip in virtual environment (most common method)
+        echo "📦 Testing with pip in venv..."
+        python -m venv test-pip-env
+        source test-pip-env/bin/activate
+        pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ keychecker
+        keychecker --version
+        keychecker --help > /dev/null
+        deactivate
+        rm -rf test-pip-env
+        echo "✅ pip installation test passed"
+        
+        # Test 2: pipx (isolated global installation)
+        echo "📦 Testing with pipx..."
+        uv tool run pipx install --index-url https://test.pypi.org/simple/ --pip-args="--extra-index-url https://pypi.org/simple/" keychecker
+        keychecker --version
+        keychecker --help > /dev/null
+        uv tool run pipx uninstall keychecker
+        echo "✅ pipx installation test passed"
+        
+        # Test 3: uv (modern fast installer)
+        echo "📦 Testing with uv..."
+        uv venv test-uv-env
         uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ keychecker
-        uv run keychecker --help
+        uv run keychecker --version
+        uv run keychecker --help > /dev/null
+        rm -rf test-uv-env
+        echo "✅ uv installation test passed"
+        
+        echo "🎉 All installation methods tested successfully!"
 
   publish-pypi:
     needs: build
@@ -134,7 +166,7 @@ jobs:
       run: uv python install 3.9  # Use minimum supported version for build
     
     - name: Install build dependencies
-      run: uv tool install build twine
+      run: uv tool install twine pipx
     
     - name: Build package
       run: uv build
@@ -145,7 +177,36 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: uv tool run twine upload dist/*
     
-    - name: Verify publication
+    - name: Verify publication with multiple installation methods
       run: |
+        echo "🧪 Verifying PyPI publication with multiple package managers..."
+        
+        # Test 1: pip in virtual environment (most common method)
+        echo "📦 Testing with pip in venv..."
+        python -m venv verify-pip-env
+        source verify-pip-env/bin/activate
+        pip install keychecker
+        keychecker --version
+        keychecker --help > /dev/null
+        deactivate
+        rm -rf verify-pip-env
+        echo "✅ pip installation verification passed"
+        
+        # Test 2: pipx (isolated global installation)
+        echo "📦 Testing with pipx..."
+        uv tool run pipx install keychecker
+        keychecker --version
+        keychecker --help > /dev/null
+        uv tool run pipx uninstall keychecker
+        echo "✅ pipx installation verification passed"
+        
+        # Test 3: uv (modern fast installer)
+        echo "📦 Testing with uv..."
+        uv venv verify-uv-env
         uv pip install keychecker
-        uv run keychecker --help
+        uv run keychecker --version
+        uv run keychecker --help > /dev/null
+        rm -rf verify-uv-env
+        echo "✅ uv installation verification passed"
+        
+        echo "🎉 All installation methods verified successfully!"
