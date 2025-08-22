@@ -98,7 +98,7 @@ jobs:
     - name: Run pip-audit vulnerability scan
       uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
       with:
-        inputs: requirements-for-audit.txt
+        inputs: .
         vulnerability-service: PyPI  # Use PyPI vulnerability database (default, but explicit)
         require-hashes: false        # Don't require hashes (our requirements file doesn't have them)
         no-deps: false              # Include dependencies (we want full dependency tree scanning)
