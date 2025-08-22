@@ -59,7 +59,7 @@ class GitHubProvider(BaseGitProvider):
         if "hi " in output_lower and "successfully authenticated" in output_lower:
             result["authenticated"] = True
             # Extract username from "Hi username!"
-            match = re.search(r"Hi (\w+)!", output, re.IGNORECASE)
+            match = re.search(r"Hi (.+)!", output, re.IGNORECASE)
             if match:
                 result["username"] = match.group(1)
         elif "successfully authenticated" in output_lower:

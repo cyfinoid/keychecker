@@ -47,7 +47,7 @@ class CodebergProvider(BaseGitProvider):
             # Extract username from "Hi there, username!"
             import re
 
-            match = re.search(r"Hi there, (\w+)!", output, re.IGNORECASE)
+            match = re.search(r"Hi there, (.+)!", output, re.IGNORECASE)
             if match:
                 result["username"] = match.group(1)
         elif "successfully authenticated" in output_lower:

@@ -48,7 +48,7 @@ class HuggingFaceProvider(BaseGitProvider):
         if "hi " in output_lower and "welcome to hugging face" in output_lower:
             # Extract username from "Hi username, welcome to Hugging Face"
             match = re.search(
-                r"Hi (\w+), welcome to Hugging Face", output, re.IGNORECASE
+                r"Hi (.+), welcome to Hugging Face", output, re.IGNORECASE
             )
             if match:
                 username = match.group(1)

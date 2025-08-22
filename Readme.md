@@ -210,11 +210,10 @@ Found 3 accessible repositories:
 
 ## 🔐 Security Notes
 
-- **Read-only operations**: No repository access or write operations performed
+- **Read-only operations**: No repositorywrite operations performed
 - **Local processing**: Private keys are processed in-memory, never uploaded
 - **Authorized use only**: Only use against keys you own or are authorized to test
 - **SSH handshake logging**: Some providers may log SSH connections - use responsibly
-- **Rate limiting**: Respect server rate limits during discovery operations
 
 ---
 
@@ -297,17 +296,6 @@ export PYPI_API_TOKEN=your_token
 
 See `scripts/README.md` for detailed script documentation.
 
-### GitHub Actions
-
-The project includes automated CI/CD workflows:
-
-- **CI Workflow**: Runs tests, linting, and builds on pull requests and pushes
-- **Publish Workflow**: Automatically publishes to PyPI on releases
-
-Set up these secrets in your GitHub repository:
-- `PYPI_API_TOKEN`: Your PyPI API token
-- `TESTPYPI_API_TOKEN`: Your TestPyPI API token
-
 ---
 
 ## 📊 Exit Codes
@@ -339,6 +327,12 @@ Set up these secrets in your GitHub repository:
 
 ---
 
+
+## 🤖 AI-Assisted Development
+
+This project was developed with the assistance of AI tools, most notably **Cursor IDE**, **Claude Code**, and **Qwen3-Coder**. These tools helped accelerate development and improve velocity. All AI-generated code has been carefully reviewed and validated through human inspection to ensure it aligns with the project’s intended functionality and quality standards.
+
+---
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
