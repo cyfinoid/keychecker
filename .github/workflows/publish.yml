@@ -4,11 +4,11 @@ name: Publish to PyPI
 # 1. Manual TestPyPI: Use workflow_dispatch with a version (e.g., 1.0.1-rc1)
 #    - Updates version using ./scripts/version.sh
 #    - Publishes to TestPyPI for testing
-#    - Tests installation with pip, pipx, and uv
+#    - Tests installation with pip, pipx, and uv (with --pre flag for pre-releases)
 # 2. Automatic PyPI: Triggered by GitHub releases
 #    - Verifies version consistency across files
-#    - Publishes to production PyPI
-#    - Tests installation with all package managers
+#    - Publishes to production PyPI (stable versions only)
+#    - Tests installation with all package managers (no --pre flag)
 
 on:
   release:
@@ -115,7 +115,9 @@ jobs:
       run: uv build
     
     - name: Install pipx for testing
-      run: uv tool install pipx
+      run: |
+        python -m pip install --user pipx
+        python -m pipx ensurepath
     
     - name: Update version for TestPyPI
       if: github.event_name == 'workflow_dispatch'
@@ -138,7 +140,7 @@ jobs:
         echo "📦 Testing with pip in venv..."
         python -m venv test-pip-env
         source test-pip-env/bin/activate
-        pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ keychecker
+        pip install --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ keychecker
         PIP_VERSION=$(keychecker --version | awk '{print $2}')
         keychecker --help > /dev/null
         deactivate
@@ -147,33 +149,44 @@ jobs:
 
         # Test 2: pipx (isolated global installation)
         echo "📦 Testing with pipx..."
-        uv tool run pipx install --index-url https://test.pypi.org/simple/ --pip-args="--extra-index-url https://pypi.org/simple/" keychecker
+        pipx install --index-url https://test.pypi.org/simple/ --pip-args="--pre --extra-index-url https://pypi.org/simple/" keychecker
         PIPX_VERSION=$(keychecker --version | awk '{print $2}')
         keychecker --help > /dev/null
-        uv tool run pipx uninstall keychecker
+        pipx uninstall keychecker
         echo "✅ pipx installation test passed (version: $PIPX_VERSION)"
 
         # Test 3: uv (modern fast installer)
         echo "📦 Testing with uv..."
-        uv venv test-uv-env
-        uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ keychecker
+        uv init --no-readme --no-workspace test-uv-project
+        cd test-uv-project
+        uv add --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ keychecker
         UV_VERSION=$(uv run keychecker --version | awk '{print $2}')
         uv run keychecker --help > /dev/null
-        rm -rf test-uv-env
+        cd ..
+        rm -rf test-uv-project
         echo "✅ uv installation test passed (version: $UV_VERSION)"
-
-        # Check that all installed versions match the uploaded version
+        
+        # Verify all installed versions match the uploaded version
         UPLOADED_VERSION="${{ github.event.inputs.version }}"
-        echo "🔍 Uploaded/TestPyPI version: $UPLOADED_VERSION"
-        echo "🔍 pip version: $PIP_VERSION"
-        echo "🔍 pipx version: $PIPX_VERSION"
-        echo "🔍 uv version: $UV_VERSION"
-
+        
+        echo "🔍 Verifying installed versions match uploaded version..."
+        echo "📋 Expected uploaded version: $UPLOADED_VERSION"
+        echo "📋 pip installed version: $PIP_VERSION"
+        echo "📋 pipx installed version: $PIPX_VERSION"
+        echo "📋 uv installed version: $UV_VERSION"
+        
         if [ "$PIP_VERSION" != "$UPLOADED_VERSION" ] || [ "$PIPX_VERSION" != "$UPLOADED_VERSION" ] || [ "$UV_VERSION" != "$UPLOADED_VERSION" ]; then
-          echo "❌ Error: Installed version(s) do not match uploaded version!"
-          exit 1
+            echo "❌ Error: Version mismatch detected in installed packages!"
+            echo "   Expected: $UPLOADED_VERSION"
+            echo "   pip: $PIP_VERSION"
+            echo "   pipx: $PIPX_VERSION"
+            echo "   uv: $UV_VERSION"
+            echo ""
+            echo "💡 This indicates a problem with the TestPyPI publication or package installation."
+            exit 1
         fi
-
+        
+        echo "✅ All installed versions match the uploaded version: $UPLOADED_VERSION"
         echo "🎉 All installation methods tested successfully and version matches!"
         
 
@@ -196,7 +209,10 @@ jobs:
       run: uv python install 3.9  # Use minimum supported version for build
     
     - name: Install build dependencies
-      run: uv tool install twine pipx
+      run: |
+        uv tool install twine
+        python -m pip install --user pipx
+        python -m pipx ensurepath
     
     - name: Build package
       run: uv build
@@ -250,27 +266,51 @@ jobs:
         python -m venv verify-pip-env
         source verify-pip-env/bin/activate
         pip install keychecker
-        keychecker --version
+        PIP_VERSION=$(keychecker --version | awk '{print $2}')
         keychecker --help > /dev/null
         deactivate
         rm -rf verify-pip-env
-        echo "✅ pip installation verification passed"
+        echo "✅ pip installation verification passed (version: $PIP_VERSION)"
         
         # Test 2: pipx (isolated global installation)
         echo "📦 Testing with pipx..."
-        uv tool run pipx install keychecker
-        keychecker --version
+        pipx install keychecker
+        PIPX_VERSION=$(keychecker --version | awk '{print $2}')
         keychecker --help > /dev/null
-        uv tool run pipx uninstall keychecker
-        echo "✅ pipx installation verification passed"
+        pipx uninstall keychecker
+        echo "✅ pipx installation verification passed (version: $PIPX_VERSION)"
         
         # Test 3: uv (modern fast installer)
         echo "📦 Testing with uv..."
-        uv venv verify-uv-env
-        uv pip install keychecker
-        uv run keychecker --version
+        uv init --no-readme --no-workspace verify-uv-project
+        cd verify-uv-project
+        uv add keychecker
+        UV_VERSION=$(uv run keychecker --version | awk '{print $2}')
         uv run keychecker --help > /dev/null
-        rm -rf verify-uv-env
-        echo "✅ uv installation verification passed"
+        cd ..
+        rm -rf verify-uv-project
+        echo "✅ uv installation verification passed (version: $UV_VERSION)"
         
+        # Verify all installed versions match the release version
+        RELEASE_VERSION="${{ github.event.release.tag_name }}"
+        RELEASE_VERSION=${RELEASE_VERSION#v}  # Remove 'v' prefix if present
+        
+        echo "🔍 Verifying installed versions match release version..."
+        echo "📋 Expected release version: $RELEASE_VERSION"
+        echo "📋 pip installed version: $PIP_VERSION"
+        echo "📋 pipx installed version: $PIPX_VERSION"
+        echo "📋 uv installed version: $UV_VERSION"
+        
+        if [ "$PIP_VERSION" != "$RELEASE_VERSION" ] || [ "$PIPX_VERSION" != "$RELEASE_VERSION" ] || [ "$UV_VERSION" != "$RELEASE_VERSION" ]; then
+            echo "❌ Error: Version mismatch detected in installed packages!"
+            echo "   Expected: $RELEASE_VERSION"
+            echo "   pip: $PIP_VERSION"
+            echo "   pipx: $PIPX_VERSION"
+            echo "   uv: $UV_VERSION"
+            echo ""
+            echo "💡 This indicates a problem with the PyPI publication or package installation."
+            exit 1
+        fi
+        
+        echo "✅ All installed versions match the release version: $RELEASE_VERSION"
         echo "🎉 All installation methods verified successfully!"
