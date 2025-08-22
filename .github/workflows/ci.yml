@@ -86,14 +86,20 @@ jobs:
       uses: PyCQA/bandit-action@67a458d90fa11fb1463e91e7f4c8f068b5863c7f # v1.0.1
       with:
         exclude: "./tests/,./scripts/,./__pycache__,./*.pyc,./.git/"
-        format: sarif
-        exit_zero: false  # Fail build on security issues
             
+    - name: Export dependencies for pip-audit
+      run: uv export --no-dev > requirements-for-audit.txt
+      
     - name: Run pip-audit vulnerability scan
       uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
       with:
-        virtual-environment: .venv
-        # Note: This action doesn't produce SARIF output, so results appear in CI logs only
+        inputs: requirements-for-audit.txt
+        vulnerability-service: PyPI  # Use PyPI vulnerability database (default, but explicit)
+        require-hashes: false        # Don't require hashes (our requirements file doesn't have them)
+        no-deps: false              # Include dependencies (we want full dependency tree scanning)
+        local: false                # Include all dependencies, not just local ones
+        summary: true               # Generate GitHub job summary
+        # Note: This action doesn't produce SARIF output, so results appear in CI logs and job summary
 
   build:
     needs: [test, lint, security]
