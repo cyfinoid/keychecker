@@ -83,7 +83,7 @@ jobs:
       run: uv sync --all-extras
     
     - name: Run Bandit security scan
-      uses: PyCQA/bandit-action@52d9d8f2237c2ca95c42ad4c8dea96d5e6b5b6b8 # v1.0.2
+      uses: PyCQA/bandit-action@67a458d90fa11fb1463e91e7f4c8f068b5863c7f # v1.0.1
       with:
         path: keychecker/
         format: sarif
@@ -97,7 +97,7 @@ jobs:
         sarif_file: bandit-results.sarif
     
     - name: Run pip-audit vulnerability scan
-      uses: pypa/gh-action-pip-audit@v1.1.0
+      uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
       with:
         virtual-environment: .venv
         format: sarif
