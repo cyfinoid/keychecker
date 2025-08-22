@@ -14,9 +14,12 @@ fi
 
 NEW_VERSION=$1
 
-# Validate version format (basic check)
-if [[ ! $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "❌ Error: Invalid version format. Use MAJOR.MINOR.PATCH (e.g., 1.0.2)"
+# Validate version format (supports pre-release versions)
+if [[ ! $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+(\.[0-9]+)?)?$ ]]; then
+    echo "❌ Error: Invalid version format."
+    echo "Supported formats:"
+    echo "  - MAJOR.MINOR.PATCH (e.g., 1.0.2)"
+    echo "  - MAJOR.MINOR.PATCH-PRERELEASE (e.g., 1.0.2-rc1, 1.0.2-alpha.1, 1.0.2-beta)"
     exit 1
 fi
 
