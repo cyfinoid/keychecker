@@ -11,6 +11,7 @@ from typing import Any
 from keychecker.core.key_analyzer import SSHKeyAnalyzer
 from keychecker.core.server_validator import ServerValidator
 from keychecker.utils.output import OutputFormatter
+from keychecker import __version__
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -29,6 +30,7 @@ Examples:
   keychecker ~/.ssh/id_rsa --validate github       # Validate against GitHub only
   keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
   keychecker ~/.ssh/id_rsa --public-out public_key.pub
+  keychecker --version                              # Show version information
 
 Exit codes:
   0 - success
@@ -109,6 +111,11 @@ Exit codes:
 
     # Debug options
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug/trace logs")
+
+    # Version option
+    parser.add_argument(
+        "-V", "--version", action="version", version=f"keychecker {__version__}"
+    )
 
     return parser
 

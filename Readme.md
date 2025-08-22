@@ -122,6 +122,7 @@ Options:
   --concurrency N       Parallel connections (default: 10)
   
   -v, --verbose         Enable debug/trace logs
+  -V, --version         Show version number and exit
   -h, --help            Show help message
 ```
 
@@ -148,6 +149,9 @@ keychecker ~/.ssh/id_ed25519 --public-out my_key.pub
 
 # Verbose output with custom timeout
 keychecker ~/.ssh/id_rsa --validate github --timeout 10 --verbose
+
+# Check version
+keychecker --version
 ```
 
 ---
