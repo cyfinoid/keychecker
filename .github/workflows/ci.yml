@@ -87,28 +87,19 @@ jobs:
       with:
         path: keychecker/
         format: sarif
-        output: bandit-results.sarif
         exit_zero: false  # Fail build on security issues
         
     - name: Upload Bandit results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@4f3212b61783c3c68e8309a0f18a699764811cda # v3.27.1
       if: always()
       with:
-        sarif_file: bandit-results.sarif
+        sarif_file: results.sarif
     
     - name: Run pip-audit vulnerability scan
       uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
       with:
         virtual-environment: .venv
-        format: sarif
-        output: pip-audit-results.sarif
         
-    - name: Upload pip-audit results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@4f3212b61783c3c68e8309a0f18a699764811cda # v3.27.1
-      if: always()
-      with:
-        sarif_file: pip-audit-results.sarif
-
   build:
     needs: [test, lint, security]
     runs-on: ubuntu-latest
