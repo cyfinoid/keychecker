@@ -159,9 +159,10 @@ jobs:
         echo "📦 Testing with uv..."
         uv init --no-readme --no-workspace test-uv-project
         cd test-uv-project
-        uv add --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ keychecker
-        UV_VERSION=$(uv run keychecker --version | awk '{print $2}')
-        uv run keychecker --help > /dev/null
+        uv add --pre --default-index https://test.pypi.org/simple/ --index https://pypi.org/simple/  --index-strategy unsafe-best-match keychecker
+        uv sync --pre --default-index https://test.pypi.org/simple/ --index https://pypi.org/simple/  --index-strategy unsafe-best-match
+        UV_VERSION=$(uv run --pre --default-index https://test.pypi.org/simple/ --index https://pypi.org/simple/ --index-strategy unsafe-best-match keychecker --version | awk '{print $2}')
+        uv run --pre --default-index https://test.pypi.org/simple/ --index https://pypi.org/simple/ --index-strategy unsafe-best-match keychecker --help > /dev/null
         cd ..
         rm -rf test-uv-project
         echo "✅ uv installation test passed (version: $UV_VERSION)"
