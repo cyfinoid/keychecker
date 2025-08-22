@@ -1,14 +1,24 @@
 name: Publish to PyPI
 
+# This workflow supports two publishing modes:
+# 1. Manual TestPyPI: Use workflow_dispatch with a version (e.g., 1.0.1-rc1)
+#    - Updates version using ./scripts/version.sh
+#    - Publishes to TestPyPI for testing
+#    - Tests installation with pip, pipx, and uv
+# 2. Automatic PyPI: Triggered by GitHub releases
+#    - Verifies version consistency across files
+#    - Publishes to production PyPI
+#    - Tests installation with all package managers
+
 on:
   release:
     types: [published]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g., 1.0.1)'
+        description: 'Version to publish to TestPyPI (e.g., 1.0.1-rc1)'
         required: true
-        default: '1.0.1'
+        default: '1.0.1-rc1'
 
 # Security: No default permissions - each job specifies its own
 permissions: {}
@@ -107,6 +117,13 @@ jobs:
     - name: Install pipx for testing
       run: uv tool install pipx
     
+    - name: Update version for TestPyPI
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        echo "🔄 Updating version to ${{ github.event.inputs.version }} for TestPyPI..."
+        chmod +x ./scripts/version.sh
+        ./scripts/version.sh ${{ github.event.inputs.version }}
+    
     - name: Publish to TestPyPI
       env:
         TWINE_USERNAME: __token__
@@ -170,6 +187,40 @@ jobs:
     
     - name: Build package
       run: uv build
+    
+    - name: Verify version consistency
+      if: github.event_name == 'release'
+      run: |
+        echo "🔍 Verifying version consistency for release..."
+        
+        # Extract release version from GitHub release tag
+        RELEASE_VERSION="${{ github.event.release.tag_name }}"
+        # Remove 'v' prefix if present (e.g., v1.0.5 -> 1.0.5)
+        RELEASE_VERSION=${RELEASE_VERSION#v}
+        
+        echo "📋 Release version: $RELEASE_VERSION"
+        
+        # Get version from pyproject.toml
+        PYPROJECT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "📋 pyproject.toml version: $PYPROJECT_VERSION"
+        
+        # Get version from __init__.py
+        INIT_VERSION=$(uv run python -c "import keychecker; print(keychecker.__version__)")
+        echo "📋 __init__.py version: $INIT_VERSION"
+        
+        # Check if all versions match
+        if [ "$RELEASE_VERSION" != "$PYPROJECT_VERSION" ] || [ "$RELEASE_VERSION" != "$INIT_VERSION" ]; then
+            echo "❌ Error: Version mismatch detected!"
+            echo "   Release tag: $RELEASE_VERSION"
+            echo "   pyproject.toml: $PYPROJECT_VERSION"
+            echo "   __init__.py: $INIT_VERSION"
+            echo ""
+            echo "💡 Please ensure all version strings match the release tag."
+            echo "   You can use: ./scripts/version.sh $RELEASE_VERSION"
+            exit 1
+        fi
+        
+        echo "✅ All versions match: $RELEASE_VERSION"
     
     - name: Publish to PyPI
       env:

@@ -288,12 +288,27 @@ The project includes shell scripts to automate common tasks:
 
 # Update version number
 ./scripts/version.sh 1.0.2
+```
 
-# Publish to TestPyPI (for testing)
+## Release Workflow
+
+```bash
+# Test publication workflow (recommended)
+# 1. Use GitHub Actions to publish to TestPyPI:
+#    - Go to Actions tab → "Publish to PyPI" → "Run workflow"
+#    - Enter a test version (e.g., 1.0.2-rc1)
+#    - This will test installation with pip, pipx, and uv
+# 2. Create a GitHub release to publish to PyPI:
+#    - Version consistency is automatically verified
+#    - Production publication with full testing
+```
+### Alternatives
+
+```bash
+# Manual publication (alternative)
 export TESTPYPI_API_TOKEN=your_token
 ./scripts/publish-testpypi.sh
 
-# Publish to PyPI
 export PYPI_API_TOKEN=your_token
 ./scripts/publish-pypi.sh
 ```
