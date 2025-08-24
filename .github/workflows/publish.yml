@@ -53,8 +53,8 @@ jobs:
     
     - name: Run linting
       run: |
-        uv run flake8 keychecker/ tests/
-        uv run black --check keychecker/ tests/
+        uv run ruff check keychecker/ tests/
+        uv run ruff format --check keychecker/ tests/
     
     - name: Run type checking
       run: uv run mypy keychecker/
