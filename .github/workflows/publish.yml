@@ -38,6 +38,8 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
       with:
+        enable-cache: true
+        cache-suffix: "test"
         version: "0.8.12"
     
     - name: Set up Python ${{ matrix.python-version }}
@@ -70,6 +72,8 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
       with:
+        enable-cache: true
+        cache-suffix: "build"
         version: "0.8.12"
     
     - name: Set up Python
@@ -103,6 +107,8 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
       with:
+        enable-cache: true
+        cache-suffix: "publish-testpypi"
         version: "0.8.12"
     
     - name: Set up Python
@@ -204,6 +210,8 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
       with:
+        enable-cache: true
+        cache-suffix: "publish-pypi"
         version: "0.8.12"
     
     - name: Set up Python
