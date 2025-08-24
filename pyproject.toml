@@ -81,10 +81,11 @@ required-version = ">=0.8.2,<0.9.0"
 dev-dependencies = [
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
-    "black>=25.1.0", 
+    "black>=25.1.0",
     "flake8>=7.3.0",
     "mypy>=1.17.1",
     "types-tqdm>=4.0.0",
     "bandit>=1.7.0",
     "pip-audit>=2.6.0",
+    "ruff>=0.12.10",
 ]
