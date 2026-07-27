@@ -55,7 +55,9 @@ Exit codes:
     parser.add_argument(
         "--validate",
         nargs="*",
-        choices=["github", "gitlab", "bitbucket", "codeberg", "gitea", "huggingface"],
+        choices=["github", "gitlab", "bitbucket", "codeberg", "gitea", "huggingface",
+                 "dataops", "assembla", "boltic", "sourcehut", "notabug",
+                 "azuredevops", "framagit", "gitverse", "launchpad"],
         help=(
             "One or more servers to validate against (default: all supported servers). "
             "When used with --discover-repos, specifies which server to use for "

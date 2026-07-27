@@ -166,6 +166,15 @@ keychecker --version
 | **Codeberg** | `git@codeberg.org` | Username extraction | SaaS based on forgejo |
 | **Gitea** | `git@gitea.com` | Username extraction | Saas based on Gitea |
 | **Hugging Face** | `git@hf.co` | Username extraction | AI/ML model hosting platform |
+| **DataOps.live** | `git@app.dataops.live` | Key confirmation | Data engineering platform |
+| **Assembla** | `git@git.assembla.com` | Username extraction | Source code & collaboration platform |
+| **Boltic** | `git@ssh.git.boltic.io` | Key confirmation | Serverless platform (Fynd Boltic) |
+| **SourceHut** | `git@git.sr.ht` | Username extraction | Open source forge |
+| **NotABug** | `git@notabug.org` | Username extraction | Gitea-based free code hosting |
+| **Azure DevOps** | `git@ssh.dev.azure.com` | Key confirmation | Microsoft DevOps platform |
+| **Framagit** | `git@framagit.org` | Username extraction | GitLab-based forge by Framasoft |
+| **GitVerse** | `git@gitverse.ru` | Key confirmation | Russian Git platform by SberTech |
+| **Launchpad** | `git@git.launchpad.net` | Key confirmation | Canonical/Ubuntu code hosting |
 
 ---
 
