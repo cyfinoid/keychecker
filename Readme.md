@@ -175,6 +175,10 @@ keychecker --version
 | **Framagit** | `git@framagit.org` | Username extraction | GitLab-based forge by Framasoft |
 | **GitVerse** | `git@gitverse.ru` | Key confirmation | Russian Git platform by SberTech |
 | **Launchpad** | `git@git.launchpad.net` | Key confirmation | Canonical/Ubuntu code hosting |
+| **Gitee** 🇨🇳 | `git@gitee.com` | Username extraction | Chinese Git platform (OSCHINA) |
+| **CODING.net** 🇨🇳 | `git@e.coding.net` | Key confirmation | Chinese DevOps platform (Tencent) |
+| **CodeUP** 🇨🇳 | `git@codeup.aliyun.com` | Username extraction | Chinese DevOps Git (Alibaba Cloud) |
+| **GitFlic** 🇷🇺 | `git@gitflic.ru` | Key confirmation | Russian Git hosting platform |
 
 ---
 

@@ -18,6 +18,10 @@ from .gitverse import GitVerseProvider
 from .launchpad import LaunchpadProvider
 from .notabug import NotABugProvider
 from .sourcehut import SourceHutProvider
+from .coding import CodingProvider
+from .codeup import CodeupProvider
+from .gitee import GiteeProvider
+from .gitflic import GitFlicProvider
 
 __all__ = [
     "BaseGitProvider",
@@ -37,4 +41,8 @@ __all__ = [
     "LaunchpadProvider",
     "NotABugProvider",
     "SourceHutProvider",
+    "CodingProvider",
+    "CodeupProvider",
+    "GiteeProvider",
+    "GitFlicProvider",
 ]

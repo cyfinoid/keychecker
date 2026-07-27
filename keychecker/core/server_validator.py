@@ -21,6 +21,10 @@ from ..plugins import (
     LaunchpadProvider,
     NotABugProvider,
     SourceHutProvider,
+    CodingProvider,
+    CodeupProvider,
+    GiteeProvider,
+    GitFlicProvider,
 )
 
 
@@ -85,6 +89,18 @@ class ServerValidator:
                 timeout=timeout, concurrency=concurrency, show_progress=show_progress
             ),
             "launchpad": LaunchpadProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "coding": CodingProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "codeup": CodeupProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "gitee": GiteeProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "gitflic": GitFlicProvider(
                 timeout=timeout, concurrency=concurrency, show_progress=show_progress
             ),
         }
