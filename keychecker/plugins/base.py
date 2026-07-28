@@ -4,9 +4,17 @@ Base plugin interface for Git hosting providers.
 
 import asyncio
 import re
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional, Tuple
+
+# ``UseKeychain`` is a macOS-only OpenSSH option. On Linux and other platforms
+# the ssh client rejects unknown options with
+# "command-line: line 0: Bad configuration option: usekeychain", which aborts
+# the handshake before authentication and surfaces as a false "authentication
+# failed". Only emit the option when running on macOS.
+_IS_MACOS = sys.platform == "darwin"
 
 try:
     from tqdm import tqdm
@@ -321,8 +329,6 @@ class BaseGitProvider(ABC):
             "-o",
             "IdentitiesOnly=yes",  # Only use the specified key
             "-o",
-            "UseKeychain=no",  # Disable macOS keychain
-            "-o",
             "PubkeyAuthentication=yes",
             "-o",
             "PasswordAuthentication=no",
@@ -332,6 +338,11 @@ class BaseGitProvider(ABC):
             "GSSAPIAuthentication=no",
             f"{self.config.username}@{self.config.hostname}",
         ]
+
+        # Disable the macOS keychain, but only on macOS (see _IS_MACOS note).
+        if _IS_MACOS:
+            # Insert before the trailing "user@host" element.
+            cmd[-1:-1] = ["-o", "UseKeychain=no"]
 
         if self.config.port != 22:
             cmd.extend(["-p", str(self.config.port)])
@@ -381,7 +392,9 @@ class BaseGitProvider(ABC):
                     "GIT_SSH_COMMAND": (
                         f"ssh -i {private_key_path} -T -F /dev/null "
                         f"-o StrictHostKeyChecking=no -o ConnectTimeout={self.timeout} "
-                        f"-o IdentitiesOnly=yes -o UseKeychain=no "
+                        f"-o IdentitiesOnly=yes "
+                        # UseKeychain is macOS-only (see _IS_MACOS note).
+                        f"{'-o UseKeychain=no ' if _IS_MACOS else ''}"
                         f"-o PubkeyAuthentication=yes -o PasswordAuthentication=no "
                         f"-o KbdInteractiveAuthentication=no -o GSSAPIAuthentication=no"
                     )
