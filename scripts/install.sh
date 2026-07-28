@@ -43,7 +43,7 @@ case "$OS" in
             pip install --require-hashes -r requirements-uv.txt
         else
             echo "⚠️  requirements-uv.txt not found, using fallback installation..."
-            pip install uv==0.8.12
+            pip install uv==0.11.32
         fi
         ;;
     *)
