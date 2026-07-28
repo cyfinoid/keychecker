@@ -177,9 +177,9 @@ export PYPI_API_TOKEN=your_token_here
 
 ### Required Tools
 
-- Python 3.8+
+- Python 3.10+
 - uv (install with: `./scripts/install.sh`)
-  - Version: 0.8.12 (pinned with cryptographic hashes in `requirements-uv.txt`)
+  - Version: 0.11.32 (pinned with cryptographic hashes in `requirements-uv.txt`)
 
 ### Environment Variables
 For publishing scripts, you need to set these environment variables:
@@ -316,7 +316,7 @@ To set up the development environment:
    chmod +x scripts/*.sh
    ```
 
-2. **Python Not Found**: Ensure Python 3.8+ is installed and in PATH
+2. **Python Not Found**: Ensure Python 3.10+ is installed and in PATH
 
 3. **uv Not Found**: Install uv first
    ```bash

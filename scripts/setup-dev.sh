@@ -29,7 +29,7 @@ fi
 
 echo "✅ uv is installed: $(uv --version)"
 
-# Check if Python 3.8+ is available
+# Check if Python 3.10+ is available
 if ! command -v python3 &> /dev/null; then
     echo "❌ Error: Python 3 is not installed"
     exit 1

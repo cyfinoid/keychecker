@@ -30,7 +30,7 @@ jobs:
     permissions:
       contents: read        # Required to checkout repository contents
       security-events: write  # Required to upload SARIF results to Security tab
-    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@1f1242919d8a60496dd1874b24b62b2370ed4c78" # v1.7.1
+    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2" # v2.3.8
     with:
       # Example of specifying custom arguments
       scan-args: |-
@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: read        # Required to checkout repository contents
       security-events: write  # Required to upload SARIF results to Security tab
-    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@1f1242919d8a60496dd1874b24b62b2370ed4c78" # v1.7.1
+    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@9a498708959aeaef5ef730655706c5a1df1edbc2" # v2.3.8
     with:
       # Example of specifying custom arguments
       scan-args: |-
