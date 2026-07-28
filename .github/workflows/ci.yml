@@ -90,12 +90,13 @@ jobs:
     - name: Run pip-audit vulnerability scan
       uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
       with:
-        inputs: .
+        # Audit the uv-synced environment (Python 3.11 + locked deps) instead of
+        # re-resolving from source. The action's own venv uses the runner's
+        # ambient Python (<3.10), which cannot install deps that require >=3.10.
+        virtual-environment: .venv  # Populated above by `uv sync --all-extras`
         vulnerability-service: PyPI  # Use PyPI vulnerability database (default, but explicit)
-        require-hashes: false        # Don't require hashes (our requirements file doesn't have them)
-        no-deps: false              # Include dependencies (we want full dependency tree scanning)
-        local: false                # Include all dependencies, not just local ones
-        summary: true               # Generate GitHub job summary
+        local: true                  # Only audit packages installed in the .venv
+        summary: true                # Generate GitHub job summary
         # Note: This action doesn't produce SARIF output, so results appear in CI logs and job summary
 
   build:
