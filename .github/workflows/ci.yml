@@ -88,16 +88,13 @@ jobs:
         exclude: "./tests/,./scripts/,./__pycache__,./*.pyc,./.git/"
                   
     - name: Run pip-audit vulnerability scan
-      uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
-      with:
-        # Audit the uv-synced environment (Python 3.11 + locked deps) instead of
-        # re-resolving from source. The action's own venv uses the runner's
-        # ambient Python (<3.10), which cannot install deps that require >=3.10.
-        virtual-environment: .venv  # Populated above by `uv sync --all-extras`
-        vulnerability-service: PyPI  # Use PyPI vulnerability database (default, but explicit)
-        local: true                  # Only audit packages installed in the .venv
-        summary: true                # Generate GitHub job summary
-        # Note: This action doesn't produce SARIF output, so results appear in CI logs and job summary
+      # Run pip-audit through uv so it executes inside the uv project
+      # environment (Python >=3.10 + locked deps). The gh-action-pip-audit
+      # action instead uses the runner's ambient Python (3.9 here, pulled in by
+      # the Bandit action), which cannot resolve/audit deps that require >=3.10.
+      # `--local` audits only the packages installed in the uv .venv.
+      run: uv run pip-audit --local --desc
+      # Note: pip-audit exits non-zero when vulnerabilities are found, failing the job.
 
   build:
     needs: [test, lint, security]
