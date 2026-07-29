@@ -44,7 +44,10 @@ class FramagitProvider(BaseGitProvider):
         }
 
         # Check for Framagit success patterns (GitLab-based)
-        if "welcome to gitlab" in output_lower or "successfully authenticated" in output_lower:
+        if (
+            "welcome to gitlab" in output_lower
+            or "successfully authenticated" in output_lower
+        ):
             result["authenticated"] = True
             # GitLab format: "Welcome to GitLab, @username!"
             match = re.search(r"Welcome to GitLab, @?(\w+)", output, re.IGNORECASE)

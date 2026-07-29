@@ -6,7 +6,6 @@ SSH host: ssh.dev.azure.com (user: git)
 """
 
 from typing import Dict, Any, List, Optional
-import re
 
 from .base import BaseGitProvider, ServerConfig
 

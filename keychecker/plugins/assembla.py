@@ -6,7 +6,6 @@ SSH host: git.assembla.com (user: Git)
 """
 
 from typing import Dict, Any, List, Optional
-import re
 
 from .base import BaseGitProvider, ServerConfig
 
