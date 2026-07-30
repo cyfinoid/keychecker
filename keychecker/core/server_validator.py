@@ -12,6 +12,19 @@ from ..plugins import (
     CodebergProvider,
     GiteaProvider,
     HuggingFaceProvider,
+    AssemblaProvider,
+    AzureDevOpsProvider,
+    BolticProvider,
+    DataOpsProvider,
+    FramagitProvider,
+    GitVerseProvider,
+    LaunchpadProvider,
+    NotABugProvider,
+    SourceHutProvider,
+    CodingProvider,
+    CodeupProvider,
+    GiteeProvider,
+    GitFlicProvider,
 )
 
 
@@ -49,6 +62,45 @@ class ServerValidator:
                 timeout=timeout, concurrency=concurrency, show_progress=show_progress
             ),
             "huggingface": HuggingFaceProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "dataops": DataOpsProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "assembla": AssemblaProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "boltic": BolticProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "sourcehut": SourceHutProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "notabug": NotABugProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "azuredevops": AzureDevOpsProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "framagit": FramagitProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "gitverse": GitVerseProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "launchpad": LaunchpadProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "coding": CodingProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "codeup": CodeupProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "gitee": GiteeProvider(
+                timeout=timeout, concurrency=concurrency, show_progress=show_progress
+            ),
+            "gitflic": GitFlicProvider(
                 timeout=timeout, concurrency=concurrency, show_progress=show_progress
             ),
         }

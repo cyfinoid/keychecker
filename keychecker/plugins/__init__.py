@@ -9,6 +9,19 @@ from .bitbucket import BitbucketProvider
 from .codeberg import CodebergProvider
 from .gitea import GiteaProvider
 from .huggingface import HuggingFaceProvider
+from .assembla import AssemblaProvider
+from .azuredevops import AzureDevOpsProvider
+from .boltic import BolticProvider
+from .dataops import DataOpsProvider
+from .framagit import FramagitProvider
+from .gitverse import GitVerseProvider
+from .launchpad import LaunchpadProvider
+from .notabug import NotABugProvider
+from .sourcehut import SourceHutProvider
+from .coding import CodingProvider
+from .codeup import CodeupProvider
+from .gitee import GiteeProvider
+from .gitflic import GitFlicProvider
 
 __all__ = [
     "BaseGitProvider",
@@ -19,4 +32,17 @@ __all__ = [
     "CodebergProvider",
     "GiteaProvider",
     "HuggingFaceProvider",
+    "AssemblaProvider",
+    "AzureDevOpsProvider",
+    "BolticProvider",
+    "DataOpsProvider",
+    "FramagitProvider",
+    "GitVerseProvider",
+    "LaunchpadProvider",
+    "NotABugProvider",
+    "SourceHutProvider",
+    "CodingProvider",
+    "CodeupProvider",
+    "GiteeProvider",
+    "GitFlicProvider",
 ]
