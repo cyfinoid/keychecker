@@ -5,8 +5,9 @@ Tests for SSH key analyzer functionality.
 import pytest
 import tempfile
 import os
+import warnings
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, ed25519
+from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ed25519
 
 from keychecker.core.key_analyzer import SSHKeyAnalyzer
 
@@ -109,3 +110,74 @@ class TestSSHKeyAnalyzer:
         assert insights["local_user"] == "user"
         assert insights["host"] == "hostname"
         assert insights["original_comment"] == comment
+
+    def test_analyze_dsa_key_captures_deprecation_warning(self):
+        """Test that CryptographyDeprecationWarning is consumed and reported."""
+        # Generate a DSA key (deprecated algorithm in cryptography)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            private_key = dsa.generate_private_key(key_size=1024)
+
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
+            pem = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+            f.write(pem)
+            key_path = f.name
+
+        try:
+            # Analyze with warnings captured by the tool
+            from cryptography.utils import CryptographyDeprecationWarning
+
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                result = self.analyzer.analyze_key_file(key_path)
+
+            # The deprecation warning must not leak to the caller
+            assert not any(
+                issubclass(w.category, CryptographyDeprecationWarning) for w in caught
+            )
+            # ...but must be reported inside the result
+            assert result["key"]["type"] == "dsa"
+            assert result["warnings"], "expected deprecation warning in result"
+            assert any("deprecated" in w.lower() for w in result["warnings"])
+
+        finally:
+            os.unlink(key_path)
+
+    def test_encrypted_pkcs8_pem_detected(self):
+        """Test that OpenSSL PKCS#8 encrypted keys are detected as pkcs8."""
+        key_data = (
+            b"-----BEGIN ENCRYPTED PRIVATE KEY-----\n"
+            b"MIHpBgsqhkiG9w0BBQ0wLwYK\n"
+            b"-----END ENCRYPTED PRIVATE KEY-----\n"
+        )
+        result = self.analyzer._analyze_encrypted_key(key_data, "/tmp/fake_key")
+
+        assert result["key"]["type"] == "pkcs8"
+        assert result["key"]["passphrase"] is True
+        assert result["warnings"] == []
+
+    def test_rsa_key_has_empty_warnings(self):
+        """Test that normal keys have no captured warnings."""
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
+            pem = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+            f.write(pem)
+            key_path = f.name
+
+        try:
+            result = self.analyzer.analyze_key_file(key_path)
+            assert result["warnings"] == []
+        finally:
+            os.unlink(key_path)
