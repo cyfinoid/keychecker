@@ -112,6 +112,10 @@ class OutputFormatter:
                 for warning in security["warnings"]:
                     lines.append(f"⚠️  {warning}")
 
+        # Library deprecation warnings (e.g. CryptographyDeprecationWarning)
+        for warning in result.get("warnings", []):
+            lines.append(f"⚠️  {warning}")
+
         # Insights
         if result.get("insights"):
             insights = result["insights"]
@@ -358,6 +362,10 @@ class OutputFormatter:
             if security.get("warnings"):
                 for warning in security["warnings"]:
                     lines.append(f"⚠️  {warning}")
+
+        # Library deprecation warnings (e.g. CryptographyDeprecationWarning)
+        for warning in result.get("warnings", []):
+            lines.append(f"⚠️  {warning}")
 
         # Insights
         if result.get("insights"):

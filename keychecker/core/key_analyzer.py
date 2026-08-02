@@ -5,9 +5,11 @@ SSH key analysis and fingerprinting functionality.
 import os
 import base64
 import hashlib
+import warnings
 from typing import Dict, Any, Optional, List
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ec, ed25519
+from cryptography.utils import CryptographyDeprecationWarning
 
 
 class SSHKeyAnalyzer:
@@ -46,31 +48,53 @@ class SSHKeyAnalyzer:
         private_key = None
         passphrase_protected = False
 
-        # Try different key loading methods
-        loaders = [
-            # OpenSSH format (most common for modern SSH keys)
-            lambda data, pwd: serialization.load_ssh_private_key(data, password=pwd),
-            # PEM format (traditional format)
-            lambda data, pwd: serialization.load_pem_private_key(data, password=pwd),
-            # DER format (less common)
-            lambda data, pwd: serialization.load_der_private_key(data, password=pwd),
-        ]
+        # Consume deprecation warnings emitted by the cryptography library
+        # (e.g. CryptographyDeprecationWarning when serializing DSA keys) so
+        # they can be reported in the analysis output instead of leaking to
+        # stderr as raw Python warnings.
+        deprecation_warnings: List[str] = []
 
-        for loader in loaders:
-            try:
-                # Try without passphrase first
-                private_key = loader(key_data, None)
-                break
-            except TypeError:
-                # Key requires passphrase
-                passphrase_protected = True
-                continue
-            except ValueError:
-                # Wrong format, try next loader
-                continue
-            except Exception:
-                # Other error, try next loader
-                continue  # nosec B112
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+
+            # Try different key loading methods
+            loaders = [
+                # OpenSSH format (most common for modern SSH keys)
+                lambda data, pwd: serialization.load_ssh_private_key(
+                    data, password=pwd
+                ),
+                # PEM format (traditional format)
+                lambda data, pwd: serialization.load_pem_private_key(
+                    data, password=pwd
+                ),
+                # DER format (less common)
+                lambda data, pwd: serialization.load_der_private_key(
+                    data, password=pwd
+                ),
+            ]
+
+            for loader in loaders:
+                try:
+                    # Try without passphrase first
+                    private_key = loader(key_data, None)
+                    break
+                except TypeError:
+                    # Key requires passphrase
+                    passphrase_protected = True
+                    continue
+                except ValueError:
+                    # Wrong format, try next loader
+                    continue
+                except Exception:
+                    # Other error, try next loader
+                    continue  # nosec B112
+
+            # Collect deprecation warnings raised while loading the key
+            deprecation_warnings.extend(
+                str(w.message)
+                for w in caught_warnings
+                if issubclass(w.category, CryptographyDeprecationWarning)
+            )
 
         if private_key is None and passphrase_protected:
             # We can still analyze the key structure without decrypting
@@ -117,8 +141,18 @@ class SSHKeyAnalyzer:
         # Get key type and size
         key_info = self._get_key_info(private_key, public_key)
 
-        # Generate public key string
-        public_key_str = self._generate_public_key_string(public_key, key_info["type"])
+        # Generate public key string (this can emit CryptographyDeprecationWarning
+        # for deprecated algorithms like DSA, so capture it)
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            public_key_str = self._generate_public_key_string(
+                public_key, key_info["type"]
+            )
+            deprecation_warnings.extend(
+                str(w.message)
+                for w in caught_warnings
+                if issubclass(w.category, CryptographyDeprecationWarning)
+            )
 
         # Extract comment from public key file if it exists
         comment = self._extract_comment(key_path, public_key_str)
@@ -150,6 +184,7 @@ class SSHKeyAnalyzer:
             },
             "security": security_flags,
             "insights": insights,
+            "warnings": deprecation_warnings,
         }
 
         return result
@@ -189,6 +224,10 @@ class SSHKeyAnalyzer:
         elif "BEGIN EC PRIVATE KEY" in key_data_str:
             key_type = "ecdsa"
             algorithm = "ecdsa-sha2-*"
+        elif "BEGIN ENCRYPTED PRIVATE KEY" in key_data_str:
+            # PKCS#8 encrypted format (OpenSSL's default for encrypted keys)
+            key_type = "pkcs8"
+            algorithm = "unknown"
         elif "BEGIN PRIVATE KEY" in key_data_str:
             # PKCS#8 format - could be any key type
             key_type = "pkcs8"
@@ -212,6 +251,7 @@ class SSHKeyAnalyzer:
             },
             "security": {"encrypted": True},
             "insights": public_key_info.get("insights", {}),
+            "warnings": [],
         }
 
     def _try_extract_public_key_info(self, key_path: str) -> Dict[str, Any]:
