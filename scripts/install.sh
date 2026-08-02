@@ -5,6 +5,11 @@
 
 set -e
 
+# Version of uv to install. This is the single source of truth for the
+# development toolchain; keep it in sync with requirements-uv.txt (hashed
+# pin) and the [tool.uv] required-version in pyproject.toml.
+UV_VERSION="0.12.0"
+
 echo "🚀 Installing uv for KeyChecker development..."
 
 # Check if uv is already installed
@@ -28,13 +33,13 @@ case "$OS" in
             echo "📦 Using Homebrew..."
             brew install uv
         else
-            echo "📦 Using curl installer..."
-            curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo "📦 Using versioned curl installer..."
+            curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
         fi
         ;;
     "Linux")
         echo "🐧 Installing uv on Linux..."
-        curl -LsSf https://astral.sh/uv/install.sh | sh
+        curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
         ;;
     "MINGW"*|"MSYS"*|"CYGWIN"*)
         echo "🪟 Installing uv on Windows..."
@@ -43,7 +48,7 @@ case "$OS" in
             pip install --require-hashes -r requirements-uv.txt
         else
             echo "⚠️  requirements-uv.txt not found, using fallback installation..."
-            pip install uv==0.11.32
+            pip install "uv==${UV_VERSION}"
         fi
         ;;
     *)
@@ -60,7 +65,7 @@ if command -v uv &> /dev/null; then
     echo "✅ uv installed successfully: $(uv --version)"
     echo ""
     echo "🎉 You can now set up the development environment:"
-echo "   ./scripts/setup-dev.sh"
+    echo "   ./scripts/setup-dev.sh"
 else
     echo "❌ uv installation failed"
     echo "Please install uv manually:"
