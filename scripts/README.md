@@ -179,7 +179,7 @@ export PYPI_API_TOKEN=your_token_here
 
 - Python 3.10+
 - uv (install with: `./scripts/install.sh`)
-  - Version: 0.11.32 (pinned with cryptographic hashes in `requirements-uv.txt`)
+  - Version: 0.12.0 (pinned with cryptographic hashes in `requirements-uv.txt`)
 
 ### Environment Variables
 For publishing scripts, you need to set these environment variables:
