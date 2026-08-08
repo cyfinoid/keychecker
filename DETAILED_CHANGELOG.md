@@ -9,6 +9,53 @@ below; drop sections that genuinely don't apply.
 
 ---
 
+## 2026-08-08 — Make `--validate all <file>` work in any argument order
+
+**Summary:** `keychecker --validate all ./test_keys/github_anantshri` failed
+with `invalid choice: './test_keys/github_anantshri'`. Reworked `--validate`
+to accept a single comma-separated value so it no longer swallows the trailing
+`key_file` positional.
+
+**Why:** `--validate` was defined with `nargs="*"` plus `choices=`, so argparse
+greedily consumed every following token — including the key-file path — as a
+provider name. With a trailing optional positional this is unavoidable while
+`nargs="*"` is used, and it forced users to remember to put the key file
+*before* `--validate`, which is not the natural order.
+
+**How:**
+- `keychecker/cli.py`: replaced `nargs="*" / choices=` on `--validate` with a
+  custom `type=_parse_validate` that splits one comma-separated token (e.g.
+  `github,gitlab`, or `all`), strips/validates each provider against
+  `ALL_PROVIDERS + [ALL_KEYWORD]`, and raises `argparse.ArgumentTypeError`
+  with a helpful message on an unknown provider. `args.validate` stays a
+  `list[str] | None`, so all downstream logic (`all` expansion, discovery
+  guard) is unchanged.
+- Updated `--validate` help text, epilog examples, and the Readme usage
+  (space-separated → comma-separated; added the `--validate all <file>`
+  example).
+- `tests/test_cli.py`: added regression tests for `--validate all <file>`
+  ordering, comma-separated multi-provider parsing, and invalid-provider
+  rejection; updated the discovery-guard helper to comma-join providers.
+
+**Commands:**
+
+```
+PYTHONPATH=/workspace python -m pytest tests/test_cli.py -q          # 13 passed
+PYTHONPATH=/workspace python -m keychecker --validate all ./test_keys/github_anantshri --no-progress
+```
+
+**Verification:** The previously-failing command now parses (`key_file` set,
+`validate=['all']`) and runs end-to-end, scanning all 19 providers and
+identifying `github: anantshri`. Invalid providers (`github,bogus`) are
+rejected with a clear message listing valid choices.
+
+**Notes:** This is a small breaking change to the CLI surface — multiple
+providers must now be comma-separated (`--validate github,gitlab`) rather than
+space-separated (`--validate github gitlab`). This is what makes the natural
+argument order unambiguous.
+
+---
+
 ## 2026-08-08 — Add `--validate all` and `--csv` summary output
 
 **Summary:** Added a `--validate all` keyword that scans every supported

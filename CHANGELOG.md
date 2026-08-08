@@ -20,6 +20,11 @@ right heading. Record the blow-by-blow detail (commands, diffs, reasoning) in
 
 ### Changed
 
+- `--validate` now takes a single comma-separated value (e.g. `github,gitlab`)
+  instead of space-separated tokens. This lets the key file follow the flag —
+  `keychecker --validate all <file>` now works in any argument order, where
+  previously the flag greedily consumed the path and errored.
+
 ### Deprecated
 
 ### Removed

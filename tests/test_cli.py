@@ -26,6 +26,28 @@ class TestValidateAllChoice:
         args = parser.parse_args(["key", "--validate", "all"])
         assert args.validate == [ALL_KEYWORD]
 
+    def test_validate_before_key_file(self):
+        # Regression: `--validate all <file>` must not swallow the key path.
+        parser = create_parser()
+        args = parser.parse_args(["--validate", "all", "./test_keys/github"])
+        assert args.validate == [ALL_KEYWORD]
+        assert args.key_file == "./test_keys/github"
+
+    def test_comma_separated_providers(self):
+        parser = create_parser()
+        args = parser.parse_args(["key", "--validate", "github,gitlab"])
+        assert args.validate == ["github", "gitlab"]
+
+    def test_invalid_provider_rejected(self):
+        parser = create_parser()
+        with pytest.raises(SystemExit):
+            parser.parse_args(["key", "--validate", "notaprovider"])
+
+    def test_empty_validate_value_rejected(self):
+        parser = create_parser()
+        with pytest.raises(SystemExit):
+            parser.parse_args(["key", "--validate", ""])
+
     def test_all_providers_contains_defaults(self):
         # Every default provider must be a real provider in the full set.
         assert set(DEFAULT_PROVIDERS).issubset(set(ALL_PROVIDERS))
@@ -77,7 +99,7 @@ class TestDiscoveryGuard:
         parser = create_parser()
         argv = [str(key), "--discovery", str(disco)]
         if validate is not None:
-            argv += ["--validate", *validate]
+            argv += ["--validate", ",".join(validate)]
         return parser.parse_args(argv)
 
     def test_discovery_rejects_all_keyword(self, tmp_path):

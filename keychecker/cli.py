@@ -51,6 +51,27 @@ DEFAULT_PROVIDERS = [
 ALL_KEYWORD = "all"
 
 
+def _parse_validate(value: str) -> List[str]:
+    """Parse a comma-separated ``--validate`` value into a list of providers.
+
+    Accepting a single (comma-separated) token instead of ``nargs="*"`` means
+    ``--validate`` never swallows the following ``key_file`` positional, so
+    ``keychecker --validate all <file>`` works regardless of argument order.
+    """
+    allowed = ALL_PROVIDERS + [ALL_KEYWORD]
+    providers = [p.strip() for p in value.split(",") if p.strip()]
+    if not providers:
+        raise argparse.ArgumentTypeError("no providers specified")
+    invalid = [p for p in providers if p not in allowed]
+    if invalid:
+        raise argparse.ArgumentTypeError(
+            "invalid provider(s): {}; choose from: {}".format(
+                ", ".join(invalid), ", ".join(allowed)
+            )
+        )
+    return providers
+
+
 def _append_csv_row(csv_path: str, row: List[str]) -> None:
     """Append a single CSV row to ``csv_path`` (created if missing)."""
     with open(csv_path, "a", newline="") as f:
@@ -71,6 +92,8 @@ Examples:
   keychecker -i ~/.ssh/id_ed25519                   # Analyze key + validate all servers
   keychecker ~/.ssh/id_ed25519 --no-validate       # Analyze key only
   keychecker ~/.ssh/id_rsa --validate github       # Validate against GitHub only
+  keychecker --validate all ~/.ssh/id_rsa          # 'all' works before the key too
+  keychecker ~/.ssh/id_rsa --validate github,gitlab  # Comma-separate multiple servers
   keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
   keychecker ~/.ssh/id_rsa --public-out public_key.pub
   keychecker --version                              # Show version information
@@ -97,14 +120,15 @@ Exit codes:
     # Validation and discovery options
     parser.add_argument(
         "--validate",
-        nargs="*",
-        choices=ALL_PROVIDERS + [ALL_KEYWORD],
+        metavar="PROVIDERS",
+        type=_parse_validate,
         help=(
-            "One or more servers to validate against (default: core providers). "
-            "Use 'all' to validate against every supported provider. "
+            "Comma-separated server(s) to validate against, e.g. 'github' or "
+            "'github,gitlab' (default: core providers). Use 'all' to validate "
+            "against every supported provider. "
             "Optional/regional providers: gitee(chinese), coding(chinese), "
             "codeup(chinese), gitflic(russian). "
-            "When used with --discover-repos, specifies which server to use for "
+            "When used with --discovery, specifies which server to use for "
             "repository discovery."
         ),
     )

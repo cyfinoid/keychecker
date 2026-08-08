@@ -65,14 +65,15 @@ cd keychecker
 # Analyze a private key and Validate against servers (default behavior)
 keychecker ~/.ssh/id_ed25519
 
-# Validate against specific servers only
-keychecker ~/.ssh/id_ed25519 --validate github gitlab bitbucket codeberg gitea huggingface
+# Validate against specific servers only (comma-separated, no spaces)
+keychecker ~/.ssh/id_ed25519 --validate github,gitlab,bitbucket,codeberg,gitea,huggingface
 
 # Validate against specific servers only
-keychecker ~/.ssh/id_rsa --validate github gitlab huggingface
+keychecker ~/.ssh/id_rsa --validate github,gitlab,huggingface
 
-# Validate against every supported provider (all 19)
+# Validate against every supported provider (all 19) — order doesn't matter
 keychecker ~/.ssh/id_ed25519 --validate all
+keychecker --validate all ~/.ssh/id_ed25519
 
 # Append a CSV summary row (key path, fingerprint, provider:username / N)
 keychecker ~/.ssh/id_ed25519 --validate all --csv results.csv
@@ -125,8 +126,9 @@ Positional Arguments:
 Options:
   -i, --input PATH      Path to private key file (alternative to positional)
   
-  --validate SERVERS    One or more servers to validate against (default: the
-                        six core providers). Use "all" for every provider.
+  --validate PROVIDERS  Comma-separated server(s) to validate against, e.g.
+                        "github" or "github,gitlab" (default: the six core
+                        providers). Use "all" for every provider.
                         Choices: github, gitlab, bitbucket, codeberg, gitea,
                         huggingface, dataops, assembla, boltic, sourcehut,
                         notabug, azuredevops, framagit, gitverse, launchpad,
