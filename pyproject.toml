@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,7 +11,8 @@ authors = [
 description = "A fast CLI to fingerprint SSH private keys and identify which Git hosting accounts they unlock"
 readme = "Readme.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE.md"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers", 
@@ -56,6 +57,9 @@ keychecker = "keychecker.cli:main"
 "Bug Reports" = "https://github.com/cyfinoid/keychecker/issues"
 "Source" = "https://github.com/cyfinoid/keychecker"
 "Documentation" = "https://github.com/cyfinoid/keychecker#readme"
+
+[tool.setuptools.packages.find]
+include = ["keychecker*"]
 
 [tool.black]
 line-length = 88
