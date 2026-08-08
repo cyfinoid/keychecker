@@ -31,4 +31,10 @@ right heading. Record the blow-by-blow detail (commands, diffs, reasoning) in
 
 ### Fixed
 
+- Editable/wheel build no longer fails with "Multiple top-level packages
+  discovered in a flat-layout" — package discovery is now pinned to
+  `keychecker*` so the `logs/` directory is not treated as a package. Also
+  pointed `license` at the actual `LICENSE` file (was the nonexistent
+  `LICENSE.md`) using the SPDX-string form.
+
 ### Security

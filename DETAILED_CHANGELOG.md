@@ -9,6 +9,47 @@ below; drop sections that genuinely don't apply.
 
 ---
 
+## 2026-08-08 — Fix CI build: flat-layout package discovery and license file
+
+**Summary:** The `lint` job failed at `uv sync --all-extras` while building the
+editable install of `keychecker`. setuptools aborted with *"Multiple top-level
+packages discovered in a flat-layout: ['logs', 'keychecker']"*, and separately
+warned that `LICENSE.md` could not be found and that `project.license` as a TOML
+table is deprecated.
+
+**Why:** The session-log convention added a top-level `logs/` directory. With no
+explicit package configuration, setuptools' automatic flat-layout discovery saw
+both `keychecker/` and `logs/` as candidate top-level packages and refused to
+guess. The `license = {file = "LICENSE.md"}` entry pointed at a file that does
+not exist (the repo ships `LICENSE`), and the table form is deprecated in favor
+of an SPDX string (setuptools>=77).
+
+**How:** (`pyproject.toml`)
+- Added `[tool.setuptools.packages.find]` with `include = ["keychecker*"]` so
+  only the real package is discovered; `logs/`, `tests/`, `examples/`, etc. are
+  ignored.
+- Replaced `license = {file = "LICENSE.md"}` with the SPDX string
+  `license = "GPL-3.0-or-later"` (matches the GPLv3 statement in `Readme.md`)
+  plus `license-files = ["LICENSE"]`.
+- Bumped the build requirement to `setuptools>=77` (required for the SPDX-string
+  `license` form).
+
+**Commands / verification:**
+- Reproduced and verified the fix in a clean venv (repo `.venv` and system uv
+  were stale/older than the pinned `uv>=0.12`):
+  `python -m venv /tmp/bv && /tmp/bv/bin/pip install "setuptools>=77" wheel build`
+  then `/tmp/bv/bin/python -m build --wheel -n` → `Successfully built
+  keychecker-1.1.0-py3-none-any.whl`.
+- Inspected the wheel: `top_level.txt` contains only `keychecker`; METADATA has
+  `License-Expression: GPL-3.0-or-later` and `License-File: LICENSE`.
+- `aidc-scan` → clean.
+
+**Notes:** No runtime code changed, so no new tests/coverage apply. GPLv3 is
+declared as `-or-later` to match the conventional GPLv3 boilerplate; switch to
+`GPL-3.0-only` if the project intends to pin to exactly v3.
+
+---
+
 ## 2026-08-08 — Make `--validate all <file>` work in any argument order
 
 **Summary:** `keychecker --validate all ./test_keys/github_anantshri` failed
