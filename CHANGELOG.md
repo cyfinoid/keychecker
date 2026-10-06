@@ -12,6 +12,13 @@ right heading. Record the blow-by-blow detail (commands, diffs, reasoning) in
 
 ### Added
 
+- Library deprecation warnings (e.g. cryptography's "SSH DSA key support is
+  deprecated") are now consumed during key analysis and surfaced as ⚠️ lines
+  in the output instead of leaking to stderr as raw Python warnings
+  (`warnings` key in the analysis result). From PR #45 by @ai-anant.
+- Encrypted PKCS#8 keys (`-----BEGIN ENCRYPTED PRIVATE KEY-----`, OpenSSL's
+  `genpkey -aes*` output) are now identified as `pkcs8` instead of `unknown`.
+  From PR #45 by @ai-anant.
 - `--validate all` keyword that expands to every supported provider (all 19),
   instead of only the six core providers scanned by default.
 - `--csv FILE` option that appends a one-line CSV summary per key: key path,
@@ -25,6 +32,13 @@ right heading. Record the blow-by-blow detail (commands, diffs, reasoning) in
 
 ### Changed
 
+- Lint tooling switched from flake8 + black to **ruff** (check + format),
+  credited to @prgyn8's PR #5 (uv-cache part of that PR declined; see
+  DETAILED_CHANGELOG). `ruff` is configured to mirror the previous flake8
+  gate (`E,F,W` @ 88 chars, same excludes); ruff 0.16's broader default rule
+  sets are deliberately not enabled yet. One-time `ruff format` pass
+  normalized quote style in 20 files (no logic changes); `.flake8`,
+  `[tool.black]`, and the black/flake8 dev dependencies were removed.
 - `--validate` now takes a single comma-separated value (e.g. `github,gitlab`)
   instead of space-separated tokens. This lets the key file follow the flag —
   `keychecker --validate all <file>` now works in any argument order, where

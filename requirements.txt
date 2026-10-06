@@ -9,6 +9,5 @@ tqdm>=4.70.1  # For progress bars
 # Development dependencies (optional)
 pytest>=9.1.1
 pytest-asyncio>=1.4.0
-black>=26.5.1
-flake8>=7.3.0
+ruff>=0.16.9
 mypy>=2.3.0

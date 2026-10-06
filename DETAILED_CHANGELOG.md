@@ -9,6 +9,155 @@ below; drop sections that genuinely don't apply.
 
 ---
 
+## 2026-10-06 — Adopt ruff (lint + format), replacing flake8 + black
+
+**Summary:** Cherry-picked the ruff half of PR #5 ("uv Cache Integration",
+@prgyn8/PragyanTiwari): CI and dev scripts now lint/format with ruff instead
+of flake8 + black. The uv-cache half of that PR was declined (stale against
+setup-uv v9 / uv 0.12 pins, see session log). Credit for the switch belongs
+to @prgyn8; the diff here is an adaptation, not the PR's literal patch
+(which predates ruff 0.16's expanded defaults and no longer applies).
+
+**Why:**
+- One fast tool replaces two; ruff check + ruff format cover the same gate.
+- PR #5 as written is NOT mergeable: based on setup-uv v6.5.0 + uv 0.8.12 +
+  `[tool.uv] dev-dependencies` (since migrated to PEP 735 dependency-groups),
+  and its bare `ruff check` (no config) fails on this tree — ruff 0.16
+  defaults now include UP/I/BLE/S/RUF/... (288 findings), far beyond the old
+  flake8 gate.
+
+**How:**
+- `pyproject.toml`: new `[tool.ruff]`/`[tool.ruff.lint]` config mirroring the
+  old gate — `select = ["E","F","W"]`, `line-length = 88`, `target-version =
+  "py310"`, same excludes as `.flake8`. `ruff>=0.16.9` added to both dev
+  groups; `black`/`flake8` removed from both; `[tool.black]` section removed;
+  `.flake8` deleted (0.16.9 = newest release ≤ the lock's 7-day
+  exclude-newer cutoff of 2026-09-29; 0.16.10 landed 2026-10-01).
+- `.github/workflows/ci.yml` + `publish.yml`: "Run linting" steps now
+  `uv run ruff check keychecker/ tests/` + `uv run ruff format --check
+  keychecker/ tests/` (attribution comment included).
+- `scripts/test.sh` + `scripts/setup-dev.sh`: black/flake8 invocations and
+  help text swapped for the ruff equivalents. `scripts/README.md` and
+  `requirements.txt` (the third dependency listing) updated to match.
+  Note: `test.sh` previously ran `black --check .` over the whole repo; the
+  new `ruff format --check keychecker/ tests/` matches the CI lint scope
+  (`examples/demo.py` was never CI-linted and stays outside it).
+- One-time `ruff format` (ruff 0.16.9): 20 files reformatted — 19 purely
+  mechanical quote-style normalization (black 26 emits `f'...{x if y else
+  "unknown"}'`, ruff format emits `f"...{x if y else 'unknown'}"`); the 20th
+  (`key_analyzer.py`) additionally carries the deliberate `# nosec B324`
+  comment removal documented in the PR #45 entry below (bandit 1.9.x honors
+  `usedforsecurity=False` and warns about the stale nosec).
+- `uv.lock`: regenerated with `uv lock --exclude-newer 2026-09-29T00:00:00Z`
+  (uv 0.12.0); adds ruff 0.16.9, removes black/flake8 + transitives (click,
+  mccabe, pycodestyle, pyflakes, pytokens); `[options]` P7D block restored
+  verbatim; `revision = 3` kept.
+- `tests/test_key_analyzer.py`: the DSA deprecation-warning fixture keeps
+  `key_size=1024` — SSH (ssh-dss) supports only 1024-bit DSA and
+  cryptography's OpenSSH serializer rejects other sizes (an earlier
+  2048-bit "fix" for bandit/semgrep broke the test; reverted in favor of
+  documented inline suppressions `# nosec B505` + `# nosemgrep:`).
+
+**Commands:**
+```
+ruff format keychecker/ tests/          # one-time, 20 files
+ruff check keychecker/ tests/           # All checks passed
+ruff format --check keychecker/ tests/  # clean
+pytest tests/ -q                        # 63 passed
+mypy keychecker/                        # clean
+aidc-scan                               # clean (suppressions honored)
+uv lock --exclude-newer 2026-09-29T00:00:00Z   # + [options] block restored
+```
+
+**Verification:**
+- ruff check + format --check clean with the parity config. Rule outcome
+  matches the old flake8 gate for E/F/W, with one permissive divergence:
+  ruff's E501 exempts overlong trailing pragma comments (e.g. the combined
+  `# nosec B505 # nosemgrep: ...` suppression line in
+  tests/test_key_analyzer.py), which flake8 would have flagged.
+- 63/63 tests pass; mypy clean; aidc-scan clean (semgrep + bandit accept the
+  documented DSA-1024 suppressions).
+- Lock: revision 3, `[options]` block byte-identical, only ruff added and
+  black/flake8 + transitives removed.
+
+**Notes:**
+- Attribution: since this lands as part of a squash commit rather than a
+  cherry-picked commit chain, credit to @prgyn8 (PR #5) is recorded here, in
+  CHANGELOG.md, and in comments at the `[tool.ruff]` config and the CI lint
+  steps.
+- Deliberately NOT enabling ruff 0.16's broader defaults (UP/I/BLE/S/RUF...:
+  288 findings) — that's a separate decision for the maintainer; the config
+  comment marks the intent.
+- PR #5 should be closed rather than merged (its uv-cache half is stale; the
+  ruff half is superseded by this change).
+
+---
+
+## 2026-10-06 — Consume & report cryptography deprecation warnings; detect encrypted PKCS#8
+
+**Summary:** Pulled in PR #45 by @ai-anant (fixes #11), verified still
+relevant on the upgraded stack (cryptography 50.0.1): deprecation warnings
+emitted by the cryptography library during key analysis are captured and
+reported as ⚠️ output lines instead of leaking to stderr, and encrypted
+PKCS#8 keys (`BEGIN ENCRYPTED PRIVATE KEY`) are classified `pkcs8` instead
+of `unknown`. Applied as `git apply` of the PR diff; three small test/code
+adjustments were needed for this repo's scanner gates.
+
+**Why:**
+- Issue #11 asked for library warnings to be consumed and reported.
+- Verified the premise survived the dependency upgrade: on cryptography
+  50.0.1, DSA public-key serialization still emits
+  `CryptographyDeprecationWarning: SSH DSA key support is deprecated and
+  will be removed in a future release`, and the current analyzer reported
+  `type: unknown` for OpenSSL-encrypted PKCS#8 keys.
+
+**How:**
+- `keychecker/core/key_analyzer.py` (PR #45):
+  key loading and public-key serialization wrapped in
+  `warnings.catch_warnings(record=True)`; `CryptographyDeprecationWarning`
+  messages collected into a new `warnings` list on the analysis result
+  (also present, empty, on the encrypted-key path). `_analyze_encrypted_key`
+  gained the `BEGIN ENCRYPTED PRIVATE KEY` → `pkcs8` branch.
+- `keychecker/utils/output.py`: both human-readable formatters print the
+  result's `warnings` as ⚠️ lines.
+- `tests/test_key_analyzer.py`: three new tests from the PR, adjusted for
+  this repo's scanner gates:
+  - DSA fixture kept at `key_size=1024` with `# nosec B505` +
+    `# nosemgrep:` suppressions and an explanatory comment — SSH (ssh-dss)
+    supports only 1024-bit DSA, so a larger key breaks the OpenSSH
+    serializer (an initial 2048-bit scanner fix broke the test and was
+    reverted).
+  - Fake encrypted-key blob passed with path label `"fake_key"` instead of
+    `"/tmp/fake_key"` (bandit B108).
+- `keychecker/core/key_analyzer.py`: removed the stale `# nosec B324`
+  trailing comment on the MD5 fingerprint line — bandit 1.9.x honors
+  `usedforsecurity=False` and emits an "unused nosec" warning for it; the
+  code itself is unchanged.
+
+**Commands:**
+```
+git apply pr45.diff                     # applied cleanly onto HEAD state
+pytest tests/ -q                        # 63 passed (3 new)
+pytest tests/ -q -W default             # no warnings leak
+python -m keychecker.cli <dsa_key>      # ⚠️ DSA deprecation shown; stderr empty
+python -m keychecker.cli <enc_pkcs8>    # Type: pkcs8 (was: unknown)
+mypy / ruff / aidc-scan                 # clean
+```
+
+**Verification:**
+- 60 → 63 tests passing; the DSA test asserts the warning is captured in
+  the result AND does not leak to the caller.
+- Manual CLI runs: DSA key shows the library deprecation ⚠️ with 0 bytes on
+  stderr; OpenSSL-style encrypted PKCS#8 key reports `Type: pkcs8`,
+  `Passphrase: YES`.
+
+**Notes:**
+- PR #45 can be closed once this lands (superseded by this application).
+- The PR's diff applied without conflicts; the only divergence from the
+  literal PR patch is the three scanner-gate adjustments listed above.
+
+---
+
 ## 2026-10-06 — Dependency upgrades superseding dependabot PRs #50–#55
 
 **Summary:** Upgraded the six packages targeted by the open dependabot PRs to

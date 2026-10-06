@@ -102,8 +102,8 @@ Runs all tests and quality checks using `uv` for fast execution.
 ```
 
 **What it does:**
-- Runs code formatting check with black
-- Runs flake8 linting
+- Runs code formatting check with ruff format
+- Runs ruff linting
 - Runs mypy type checking
 - Runs pytest with coverage
 - Runs security checks with bandit and pip-audit (skips editable packages)
@@ -252,10 +252,10 @@ Once you have uv set up, you can use these commands directly:
 uv run pytest
 
 # Format code
-uv run black .
+uv run ruff format keychecker/ tests/
 
 # Lint code
-uv run flake8 .
+uv run ruff check keychecker/ tests/
 
 # Type check
 uv run mypy .

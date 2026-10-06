@@ -41,8 +41,7 @@ dependencies = [
 dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "black>=26.5.1", 
-    "flake8>=7.3.0",
+    "ruff>=0.16.9",
     "mypy>=2.3.0",
     "types-tqdm>=4.70.0",
     "bandit>=1.9.4",
@@ -61,9 +60,20 @@ keychecker = "keychecker.cli:main"
 [tool.setuptools.packages.find]
 include = ["keychecker*"]
 
-[tool.black]
+# Lint tooling switched from flake8+black to ruff.
+# Initial switch proposed in cyfinoid/keychecker#5 by @prgyn8 (PragyanTiwari);
+# adapted here with a config matching the previous flake8 gate (.flake8, now
+# removed) and the repo's 88-char black line length.
+[tool.ruff]
 line-length = 88
-target-version = ['py310']
+target-version = "py310"
+exclude = [".git", "__pycache__", "build", "dist", "*.egg-info", ".venv", "venv"]
+
+[tool.ruff.lint]
+# Mirror the previous flake8 gate: pycodestyle (E/W) + pyflakes (F) only.
+# Deliberately NOT adopting ruff 0.16's broader defaults (UP/I/BLE/S/RUF/...)
+# in this switch; see DETAILED_CHANGELOG 2026-10-06 ruff entry.
+select = ["E", "F", "W"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -87,8 +97,7 @@ required-version = ">=0.12.0,<0.13.0"
 dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "black>=26.5.1", 
-    "flake8>=7.3.0",
+    "ruff>=0.16.9",
     "mypy>=2.3.0",
     "types-tqdm>=4.70.0",
     "bandit>=1.9.4",
