@@ -153,6 +153,8 @@ class TestSSHKeyAnalyzer:
 
     def test_encrypted_pkcs8_pem_detected(self):
         """Test that OpenSSL PKCS#8 encrypted keys are detected as pkcs8."""
+        # Not a real key: a 24-char dummy body that only exercises header
+        # detection (allowed for gitleaks via .gitleaks.toml).
         key_data = (
             b"-----BEGIN ENCRYPTED PRIVATE KEY-----\n"
             b"MIHpBgsqhkiG9w0BBQ0wLwYK\n"

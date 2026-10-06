@@ -75,6 +75,14 @@ right heading. Record the blow-by-blow detail (commands, diffs, reasoning) in
 
 ### Security
 
+- Transitive lock upgrades closing all `pip-audit` findings:
+  multidict 6.7.1 → 6.9.1 (CVE-2026-104874, reference-leak memory
+  exhaustion in items-view set operations; fix release 6.9.1 — 7.0.0 is
+  excluded by aiohttp's own `multidict<7.0` cap) and urllib3 2.7.0 → 2.8.0
+  (PYSEC-2026-4175 proxy-TLS config mixups, PYSEC-2026-4176 Deflate
+  infinite loop, PYSEC-2026-4177 unbounded chunk-size buffering). Both
+  fix releases predate the lock's 7-day `exclude-newer-span` cutoff, so no
+  policy bypass was needed. `pip-audit` on the locked set is now clean.
 - uv-managed pip upgraded 26.1.2 → 26.2.1 in `uv.lock`; 26.1.2 is affected by
   published advisory PYSEC-2026-3721 (fix: 26.2).
 - `publish.yml`: workflow inputs/context (`github.event.inputs.version`,

@@ -9,6 +9,62 @@ below; drop sections that genuinely don't apply.
 
 ---
 
+## 2026-10-06 — Close pip-audit findings: multidict 6.9.1 + urllib3 2.8.0
+
+**Summary:** `pip-audit` over the locked dependency set (`uv export` →
+`pip-audit -r`) reported 4 vulnerabilities in 2 transitive packages; both
+upgraded in `uv.lock`. No code or specifier changes. Lock-only delta.
+
+**Why:**
+- multidict 6.7.1 — CVE-2026-104874: reference leak in items-view union/
+  subtraction lets a remote client drive unreclaimable memory growth in the
+  aio-libs stack (multidict backs HTTP headers/query strings). Fix: 6.9.1.
+- urllib3 2.7.0 — PYSEC-2026-4175 (proxy vs target TLS config mixups),
+  PYSEC-2026-4176 (Deflate streaming infinite loop), PYSEC-2026-4177
+  (chunked-streaming unbounded chunk-size buffering). Fix: 2.8.0.
+- User asked to push flagged packages to latest, bypassing the lock's 7-day
+  `exclude-newer-span` cooldown for security fixes. As it turned out, no
+  bypass was required: all fix releases (multidict 6.9.1 2026-09-21,
+  urllib3 2.8.0 2026-09-15) predate the 2026-09-29 cutoff — they were
+  missed earlier only because previous lock runs used targeted
+  `--upgrade-package` lists that never named these transitives.
+- "Latest": multidict 7.0.0 (2026-09-26) is also pre-cutoff but aiohttp
+  3.14.3 pins `multidict<7.0,>=4.5`, so 6.9.1 IS the latest resolvable.
+  urllib3 2.8.0 is latest overall.
+
+**How:**
+- `uv lock --exclude-newer 2026-09-29T00:00:00Z --upgrade-package multidict
+  --upgrade-package urllib3` (uv 0.12.0, keeps lock revision 3); the
+  `[options]` P7D block restored verbatim afterwards (known hazard —
+  re-verified present). Only these two version entries changed in the lock.
+
+**Commands:**
+```
+uv export --frozen --all-extras --no-hashes --no-emit-project -o locked-reqs.txt
+pip-audit -r locked-reqs.txt            # before: 4 vulns / 2 packages; after: clean
+uv lock --exclude-newer 2026-09-29T00:00:00Z \
+    --upgrade-package multidict --upgrade-package urllib3
+uv sync --all-extras && pytest    # clean copy: 63 passed
+```
+
+**Verification:**
+- pip-audit on the new locked set: "No known vulnerabilities found".
+- `uv sync --all-extras` + full suite (63/63) in a clean copy of HEAD with
+  the new lock; ruff clean; lock `[options]` block byte-identical,
+  revision 3; diff touches only the two version entries.
+
+**Notes:**
+- Reachability in keychecker itself is low (multidict paths flagged by the
+  CVE need items-view set algebra over attacker-controlled operands, which
+  the GitHub API client does not perform; the urllib3 issues need streaming
+  from untrusted servers via requests, used only by dev tooling) — upgraded
+  regardless so shipped metadata audits clean.
+- If a future security fix lands inside the 7-day window, the supported
+  bypass is `--exclude-newer-package <pkg>=<early-date>` alongside
+  `--exclude-newer`; documented here for the next session.
+
+---
+
 ## 2026-10-06 — Adopt ruff (lint + format), replacing flake8 + black
 
 **Summary:** Cherry-picked the ruff half of PR #5 ("uv Cache Integration",

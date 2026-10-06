@@ -1,0 +1,16 @@
+# Gitleaks configuration.
+#
+# keychecker fingerprints SSH keys for a living, so its test suite
+# legitimately contains fake key-shaped fixtures. This allowlist scopes the
+# exemption to the one test file that builds dummy PEM blobs (header
+# detection only — no real key material, bodies are 22-char dummies).
+title = "keychecker gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake key fixtures in the key-analyzer tests (dummy 24-char bodies, not real keys)"
+paths = [
+    '''tests/test_key_analyzer\.py''',
+]
