@@ -72,6 +72,24 @@ def _parse_validate(value: str) -> List[str]:
     return providers
 
 
+def _normalize_orgs(org_values: Any) -> List[str]:
+    """Flatten ``--org`` values into a deduped, ordered list of org names.
+
+    ``--org`` uses ``action="append"`` and each value may itself be
+    comma-separated, so a single call site can accept both ``--org a --org b``
+    and ``--org a,b``.
+    """
+    orgs: List[str] = []
+    seen = set()
+    for value in org_values or []:
+        for org in value.split(","):
+            org = org.strip()
+            if org and org not in seen:
+                seen.add(org)
+                orgs.append(org)
+    return orgs
+
+
 def _append_csv_row(csv_path: str, row: List[str]) -> None:
     """Append a single CSV row to ``csv_path`` (created if missing)."""
     with open(csv_path, "a", newline="") as f:
@@ -95,6 +113,7 @@ Examples:
   keychecker --validate all ~/.ssh/id_rsa          # 'all' works before the key too
   keychecker ~/.ssh/id_rsa --validate github,gitlab  # Comma-separate multiple servers
   keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
+  keychecker ~/.ssh/id_rsa --validate github --discovery repos.txt --org acme
   keychecker ~/.ssh/id_rsa --public-out public_key.pub
   keychecker --version                              # Show version information
 
@@ -145,6 +164,28 @@ Exit codes:
         help=(
             "File with candidate repository names (not usernames). When specified, "
             "enables repository discovery mode."
+        ),
+    )
+
+    parser.add_argument(
+        "--org",
+        metavar="ORG",
+        action="append",
+        help=(
+            "Organization name to target for repository discovery instead of "
+            "(or in addition to) API-discovered orgs. Repeatable and accepts "
+            "comma-separated values (e.g. --org acme --org foo,bar). By default "
+            "these are merged with auto-discovered orgs; pass --no-org-discovery "
+            "to use only the provided org(s). Requires --discovery."
+        ),
+    )
+
+    parser.add_argument(
+        "--no-org-discovery",
+        action="store_true",
+        help=(
+            "Skip automatic organization discovery and use only the org(s) given "
+            "with --org. Requires --org."
         ),
     )
 
@@ -312,14 +353,23 @@ async def run_analysis(args: Any) -> int:
                 )
 
             target_server = args.validate[0]
+            manual_orgs = _normalize_orgs(args.org)
+            discover_via_api = not args.no_org_discovery
             if args.verbose:
                 formatter.print_verbose(
                     f"Running repository discovery against {target_server}"
                 )
+                if manual_orgs:
+                    formatter.print_verbose(
+                        "Using custom org(s): {} (API discovery {})".format(
+                            ", ".join(manual_orgs),
+                            "enabled" if discover_via_api else "disabled",
+                        )
+                    )
 
             # First, discover organizations and show them immediately
             org_discovery_info = await validator.discover_organizations_only(
-                args.input_file, target_server
+                args.input_file, target_server, manual_orgs, discover_via_api
             )
             if org_discovery_info:
                 org_output = formatter.format_organization_discovery(org_discovery_info)
@@ -328,7 +378,11 @@ async def run_analysis(args: Any) -> int:
 
             # Then run full repository discovery
             repo_discovery_results = await validator.discover_repositories(
-                args.input_file, target_server, args.discovery
+                args.input_file,
+                target_server,
+                args.discovery,
+                manual_orgs,
+                discover_via_api,
             )
 
             # Add a clear line after progress bars before showing results
@@ -435,6 +489,22 @@ def validate_args(args: Any) -> None:
                 f"❌ Error: Discovery file not found: {args.discovery}", file=sys.stderr
             )
             sys.exit(1)
+
+    # Validate custom-org options: they only apply to repository discovery.
+    if (args.org or args.no_org_discovery) and not args.discovery:
+        print(
+            "❌ Error: --org/--no-org-discovery only apply to repository discovery "
+            "and require --discovery",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if args.no_org_discovery and not args.org:
+        print(
+            "❌ Error: --no-org-discovery requires at least one --org value",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # Validate argument combinations
     if args.validate is not None and args.no_validate:

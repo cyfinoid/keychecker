@@ -248,6 +248,10 @@ class OutputFormatter:
         if username:
             lines.append(f"Identified user: {username}")
 
+        manual_orgs = org_discovery_results.get("manual_organizations", [])
+        if manual_orgs:
+            lines.append(f"User-supplied organizations: {', '.join(manual_orgs)}")
+
         if organizations:
             lines.append(f"Found organizations: {', '.join(organizations)}")
             lines.append(f"Total organizations: {len(organizations)}")
@@ -270,6 +274,13 @@ class OutputFormatter:
                 lines.append("Discovery method: heuristic (API fallback)")
             else:
                 lines.append("Discovery method: heuristic")
+        elif discovery_method == "manual":
+            lines.append("Discovery method: user-supplied orgs (API discovery off)")
+        elif discovery_method and discovery_method.startswith("manual+"):
+            lines.append(
+                f"Discovery method: user-supplied orgs + "
+                f"{discovery_method.split('+', 1)[1]}"
+            )
 
         return "\n".join(lines)
 

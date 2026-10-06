@@ -102,42 +102,87 @@ class BaseGitProvider(ABC):
         """
         pass
 
+    @staticmethod
+    def _merge_orgs(manual_orgs: List[str], discovered_orgs: List[str]) -> List[str]:
+        """Merge manually supplied and discovered orgs, deduped, manual first.
+
+        Order is preserved and duplicates are dropped so a manually supplied org
+        that is also found via discovery is only tested once.
+        """
+        merged: List[str] = []
+        seen = set()
+        for org in list(manual_orgs) + list(discovered_orgs):
+            if org and org not in seen:
+                seen.add(org)
+                merged.append(org)
+        return merged
+
+    @staticmethod
+    def _org_discovery_method(
+        base_method: Optional[str], manual_orgs: List[str], discover_via_api: bool
+    ) -> Optional[str]:
+        """Describe how the final org list was assembled for display.
+
+        ``base_method`` is the method used for auto-discovered orgs (e.g.
+        ``"heuristic"`` or ``"api"``), or ``None`` when discovery was skipped.
+        """
+        discovered_method = base_method if discover_via_api else None
+        if manual_orgs:
+            return f"manual+{discovered_method}" if discovered_method else "manual"
+        return discovered_method
+
     async def discover_organizations_only(
-        self, private_key_path: str
+        self,
+        private_key_path: str,
+        manual_orgs: Optional[List[str]] = None,
+        discover_via_api: bool = True,
     ) -> Dict[str, Any]:
         """
         Discover organizations for the key owner without testing repositories.
 
         Args:
             private_key_path: Path to SSH private key
+            manual_orgs: Org names supplied by the user; merged with (or used in
+                place of) auto-discovered orgs.
+            discover_via_api: When False, skip automatic org discovery and use
+                only ``manual_orgs``.
 
         Returns:
             Dictionary with organization discovery results
         """
+        manual_orgs = manual_orgs or []
         try:
             # Step 1: Identify username
             username = await self.identify_user(private_key_path)
-            if not username:
+            if not username and not manual_orgs:
                 return {
                     "server": self.config.name,
                     "username": None,
                     "organizations": [],
+                    "manual_organizations": [],
                     "discovery_method": None,
                     "error": "Could not identify username from key validation",
                 }
 
-            # Step 2: Discover organizations
-            organizations = await self.discover_organizations(
-                private_key_path, username
-            )
+            # Step 2: Discover organizations (unless disabled) and merge with manual
+            discovered: List[str] = []
+            if discover_via_api and username:
+                discovered = await self.discover_organizations(
+                    private_key_path, username
+                )
+            organizations = self._merge_orgs(manual_orgs, discovered)
 
-            # Determine discovery method (this will be overridden by specific providers)
-            discovery_method = "heuristic"  # Default
+            # Determine discovery method (this will be overridden by specific
+            # providers to distinguish api vs heuristic)
+            discovery_method = self._org_discovery_method(
+                "heuristic", manual_orgs, discover_via_api
+            )
 
             return {
                 "server": self.config.name,
                 "username": username,
                 "organizations": organizations,
+                "manual_organizations": list(manual_orgs),
                 "discovery_method": discovery_method,
                 "error": None,
             }
@@ -147,6 +192,7 @@ class BaseGitProvider(ABC):
                 "server": self.config.name,
                 "username": None,
                 "organizations": [],
+                "manual_organizations": list(manual_orgs),
                 "discovery_method": None,
                 "error": str(e),
             }
@@ -169,7 +215,11 @@ class BaseGitProvider(ABC):
         pass
 
     async def discover_repositories(
-        self, private_key_path: str, repo_names: List[str]
+        self,
+        private_key_path: str,
+        repo_names: List[str],
+        manual_orgs: Optional[List[str]] = None,
+        discover_via_api: bool = True,
     ) -> Dict[str, Any]:
         """
         Discover accessible repositories using the provided wordlist.
@@ -179,14 +229,20 @@ class BaseGitProvider(ABC):
         Args:
             private_key_path: Path to SSH private key
             repo_names: List of repository names to test
+            manual_orgs: Org names supplied by the user; merged with (or used in
+                place of) auto-discovered orgs as additional repository owners.
+            discover_via_api: When False, skip automatic org discovery and use
+                only ``manual_orgs`` as extra owners.
 
         Returns:
             Dictionary with repository discovery results
         """
+        manual_orgs = manual_orgs or []
         results: Dict[str, Any] = {
             "server": self.config.name,
             "username": None,
             "organizations": [],
+            "manual_organizations": list(manual_orgs),
             "accessible_repositories": [],
             "total_attempts": 0,
             "successful_attempts": 0,
@@ -205,20 +261,24 @@ class BaseGitProvider(ABC):
             username = await self.identify_user(private_key_path)
             results["username"] = username
 
-            if not username:
+            if not username and not manual_orgs:
                 results["errors"].append(
                     "Could not identify username from key validation"
                 )
                 return results
 
-            # Step 2: Discover organizations
-            organizations = await self.discover_organizations(
-                private_key_path, username
-            )
+            # Step 2: Discover organizations (unless disabled) and merge with manual
+            discovered: List[str] = []
+            if discover_via_api and username:
+                discovered = await self.discover_organizations(
+                    private_key_path, username
+                )
+            organizations = self._merge_orgs(manual_orgs, discovered)
             results["organizations"] = organizations
 
-            # Step 3: Test repositories for each target separately
-            targets = [username] + organizations
+            # Step 3: Test repositories for each target separately. When the
+            # username could not be identified we still test the manual orgs.
+            targets = ([username] if username else []) + organizations
 
             async def test_target_repositories(
                 owner: str, target_index: int

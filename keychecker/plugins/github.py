@@ -220,53 +220,65 @@ class GitHubProvider(BaseGitProvider):
         return organizations
 
     async def discover_organizations_only(
-        self, private_key_path: str
+        self,
+        private_key_path: str,
+        manual_orgs: Optional[List[str]] = None,
+        discover_via_api: bool = True,
     ) -> Dict[str, Any]:
         """
         Discover organizations for the key owner without testing repositories.
         Override to include GitHub API-specific information.
         """
+        manual_orgs = manual_orgs or []
+        api_available = HAS_AIOHTTP
+        api_token_provided = bool(self.api_token)
         try:
             # Step 1: Identify username
             username = await self.identify_user(private_key_path)
-            if not username:
+            if not username and not manual_orgs:
                 return {
                     "server": self.config.name,
                     "username": None,
                     "organizations": [],
+                    "manual_organizations": [],
                     "discovery_method": None,
-                    "api_available": HAS_AIOHTTP,
-                    "api_token_provided": bool(self.api_token),
+                    "api_available": api_available,
+                    "api_token_provided": api_token_provided,
                     "error": "Could not identify username from key validation",
                 }
 
-            # Step 2: Discover organizations
-            organizations = []
-            discovery_method = "heuristic"
-            api_available = HAS_AIOHTTP
-            api_token_provided = bool(self.api_token)
+            # Step 2: Discover organizations (unless disabled)
+            discovered: List[str] = []
+            base_method: Optional[str] = None
+            if discover_via_api and username:
+                base_method = "heuristic"
+                # Try API-based discovery first
+                if HAS_AIOHTTP:
+                    try:
+                        api_orgs = await self._get_user_organizations_via_api(username)
+                        if api_orgs:
+                            discovered = api_orgs
+                            base_method = "api"
+                    except Exception:
+                        # Fall back to heuristic approach if API fails
+                        pass  # nosec B110
 
-            # Try API-based discovery first
-            if HAS_AIOHTTP:
-                try:
-                    api_orgs = await self._get_user_organizations_via_api(username)
-                    if api_orgs:
-                        organizations = api_orgs
-                        discovery_method = "api"
-                except Exception:
-                    # Fall back to heuristic approach if API fails
-                    pass  # nosec B110
+                # If API didn't work, try heuristic
+                if not discovered:
+                    discovered = await self._discover_organizations_heuristic(
+                        private_key_path, username
+                    )
 
-            # If API didn't work, try heuristic
-            if not organizations:
-                organizations = await self._discover_organizations_heuristic(
-                    private_key_path, username
-                )
+            organizations = self._merge_orgs(manual_orgs, discovered)
+            discovery_method = self._org_discovery_method(
+                base_method, manual_orgs, discover_via_api
+            )
 
             return {
                 "server": self.config.name,
                 "username": username,
                 "organizations": organizations,
+                "manual_organizations": list(manual_orgs),
                 "discovery_method": discovery_method,
                 "api_available": api_available,
                 "api_token_provided": api_token_provided,
@@ -278,9 +290,10 @@ class GitHubProvider(BaseGitProvider):
                 "server": self.config.name,
                 "username": None,
                 "organizations": [],
+                "manual_organizations": list(manual_orgs),
                 "discovery_method": None,
-                "api_available": HAS_AIOHTTP,
-                "api_token_provided": bool(self.api_token),
+                "api_available": api_available,
+                "api_token_provided": api_token_provided,
                 "error": str(e),
             }
 
@@ -294,20 +307,37 @@ class GitHubProvider(BaseGitProvider):
         return await self._run_git_ls_remote(private_key_path, repo_url)
 
     async def discover_repositories(
-        self, private_key_path: str, repo_names: List[str]
+        self,
+        private_key_path: str,
+        repo_names: List[str],
+        manual_orgs: Optional[List[str]] = None,
+        discover_via_api: bool = True,
     ) -> Dict[str, Any]:
         """
         GitHub-specific repository discovery with enhanced features.
         """
         # Use the base implementation but add GitHub-specific enhancements
-        results = await super().discover_repositories(private_key_path, repo_names)
+        results = await super().discover_repositories(
+            private_key_path, repo_names, manual_orgs, discover_via_api
+        )
 
         # Add GitHub-specific metadata
         results["provider"] = "github"
         results["api_available"] = HAS_AIOHTTP
         results["api_token_provided"] = self.api_token is not None
-        results["discovery_method"] = (
-            "api" if (HAS_AIOHTTP and results.get("organizations")) else "heuristic"
+
+        # Describe how the org list was assembled: manual-supplied orgs vs
+        # auto-discovered (api/heuristic), or a combination of both.
+        manual = results.get("manual_organizations", [])
+        discovered_present = any(
+            org not in manual for org in results.get("organizations", [])
+        )
+        if discover_via_api:
+            base_method = "api" if (HAS_AIOHTTP and discovered_present) else "heuristic"
+        else:
+            base_method = None
+        results["discovery_method"] = self._org_discovery_method(
+            base_method, manual, discover_via_api
         )
 
         # GitHub-specific repository categorization

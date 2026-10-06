@@ -21,7 +21,10 @@ _A fast CLI tool to fingerprint SSH private keys and identify which Git hosting 
 - **Multi-provider support**: GitHub, GitLab, Bitbucket, Codeberg, Gitea, Hugging Face
 - **Safe SSH handshakes**: Read-only validation without triggering repo operations
 - **Username extraction**: Parses SSH identity banners to recover mapped usernames
-- **Organization discovery**: Identifies user membership in organizations (GitHub API)
+- **Organization discovery**: Identifies user membership in organizations (GitHub API),
+  or target a known org directly with `--org` / `--no-org-discovery`
+- **Parallel validation**: `--validate all` and multi-provider checks run
+  concurrently (bounded by `--concurrency`)
 
 ### 📁 Repository Discovery
 - **Private repo detection**: Uses `git ls-remote` probes with wordlists
@@ -109,6 +112,12 @@ keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
 
 # Or pass token directly
 keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt --github-token ghp_your_token_here
+
+# Target a known org (merged with auto-discovered orgs)
+keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt --org acme
+
+# Only test the given org(s); skip automatic org discovery
+keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt --org acme --no-org-discovery
 ```
 
 ---
@@ -137,6 +146,12 @@ Options:
   
   --discovery FILE      Enable repository discovery with wordlist file
                         (requires exactly one concrete --validate server)
+  --org ORG             Custom organization name to target during repository
+                        discovery, merged with API-discovered orgs. Repeatable
+                        and comma-separated (e.g. --org acme --org foo,bar).
+                        Requires --discovery.
+  --no-org-discovery    Skip automatic org discovery; test only the org(s)
+                        given with --org (requires --org)
   
   --github-token TOKEN  GitHub API token for enhanced organization discovery
   --no-progress         Disable progress bars during repository discovery
@@ -148,7 +163,8 @@ Options:
   --no-banner           Suppress banner output
   
   --timeout SECONDS     Per-connection timeout (default: 5)
-  --concurrency N       Parallel connections (default: 10)
+  --concurrency N       Max parallel connections; also bounds concurrent
+                        multi-provider validation (default: 10)
   
   -v, --verbose         Enable debug/trace logs
   -V, --version         Show version number and exit
