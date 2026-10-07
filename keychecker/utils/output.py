@@ -112,6 +112,10 @@ class OutputFormatter:
                 for warning in security["warnings"]:
                     lines.append(f"⚠️  {warning}")
 
+        # Library deprecation warnings (e.g. CryptographyDeprecationWarning)
+        for warning in result.get("warnings", []):
+            lines.append(f"⚠️  {warning}")
+
         # Insights
         if result.get("insights"):
             insights = result["insights"]
@@ -248,6 +252,10 @@ class OutputFormatter:
         if username:
             lines.append(f"Identified user: {username}")
 
+        manual_orgs = org_discovery_results.get("manual_organizations", [])
+        if manual_orgs:
+            lines.append(f"User-supplied organizations: {', '.join(manual_orgs)}")
+
         if organizations:
             lines.append(f"Found organizations: {', '.join(organizations)}")
             lines.append(f"Total organizations: {len(organizations)}")
@@ -270,6 +278,13 @@ class OutputFormatter:
                 lines.append("Discovery method: heuristic (API fallback)")
             else:
                 lines.append("Discovery method: heuristic")
+        elif discovery_method == "manual":
+            lines.append("Discovery method: user-supplied orgs (API discovery off)")
+        elif discovery_method and discovery_method.startswith("manual+"):
+            lines.append(
+                f"Discovery method: user-supplied orgs + "
+                f"{discovery_method.split('+', 1)[1]}"
+            )
 
         return "\n".join(lines)
 
@@ -358,6 +373,10 @@ class OutputFormatter:
             if security.get("warnings"):
                 for warning in security["warnings"]:
                     lines.append(f"⚠️  {warning}")
+
+        # Library deprecation warnings (e.g. CryptographyDeprecationWarning)
+        for warning in result.get("warnings", []):
+            lines.append(f"⚠️  {warning}")
 
         # Insights
         if result.get("insights"):
@@ -461,6 +480,35 @@ class OutputFormatter:
                 )
 
         return "\n".join(lines)
+
+    def build_csv_row(
+        self,
+        key_id: str,
+        fingerprint: str,
+        validation_results: Dict[str, Any],
+    ) -> List[str]:
+        """Build a CSV summary row for a single key.
+
+        Columns are: ``key_id``, ``fingerprint``, then one ``provider:username``
+        entry for each provider where an account was identified. When no
+        username is found on any validated provider, a single ``N`` is emitted
+        in place of the matches.
+        """
+        matches: List[str] = []
+        for server, result_data in validation_results.items():
+            # Only count a provider when the key authenticated AND the provider
+            # actually resolved a username — that is the "valid key identified"
+            # case the CSV is meant to capture.
+            if (
+                result_data.get("reachable")
+                and result_data.get("authenticated", True)
+                and result_data.get("username")
+            ):
+                matches.append(f"{server}:{result_data['username']}")
+
+        row = [key_id, fingerprint]
+        row.extend(matches if matches else ["N"])
+        return row
 
     def print_error(self, message: str, exit_code: Optional[int] = None) -> None:
         """Print error message and optionally exit."""

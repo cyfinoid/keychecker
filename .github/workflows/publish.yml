@@ -38,7 +38,7 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       with:
-        version: "0.12.0"
+        version: "0.12.23"
     
     - name: Set up Python ${{ matrix.python-version }}
       run: uv python install ${{ matrix.python-version }}
@@ -50,9 +50,10 @@ jobs:
       run: uv run pytest -v
     
     - name: Run linting
+      # ruff adopted from PR #5 by @prgyn8 — replaces flake8 + black
       run: |
-        uv run flake8 keychecker/ tests/
-        uv run black --check keychecker/ tests/
+        uv run ruff check keychecker/ tests/
+        uv run ruff format --check keychecker/ tests/
     
     - name: Run type checking
       run: uv run mypy keychecker/
@@ -70,7 +71,7 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       with:
-        version: "0.12.0"
+        version: "0.12.23"
     
     - name: Set up Python
       run: uv python install 3.10  # Use minimum supported version for build
@@ -103,7 +104,7 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       with:
-        version: "0.12.0"
+        version: "0.12.23"
     
     - name: Set up Python
       run: uv python install 3.10  # Use minimum supported version for build
@@ -121,10 +122,12 @@ jobs:
     
     - name: Update version for TestPyPI
       if: github.event_name == 'workflow_dispatch'
+      env:
+        VERSION_INPUT: ${{ github.event.inputs.version }}
       run: |
-        echo "🔄 Updating version to ${{ github.event.inputs.version }} for TestPyPI..."
+        echo "🔄 Updating version to $VERSION_INPUT for TestPyPI..."
         chmod +x ./scripts/version.sh
-        ./scripts/version.sh ${{ github.event.inputs.version }}
+        ./scripts/version.sh "$VERSION_INPUT"
     
     - name: Publish to TestPyPI
       env:
@@ -133,6 +136,8 @@ jobs:
       run: uv tool run twine upload --repository testpypi dist/*
     
     - name: Test installation methods from TestPyPI
+      env:
+        VERSION_INPUT: ${{ github.event.inputs.version }}
       run: |
         echo "🧪 Testing installation with multiple package managers..."
         
@@ -168,7 +173,7 @@ jobs:
         echo "✅ uv installation test passed (version: $UV_VERSION)"
         
         # Verify all installed versions match the uploaded version
-        UPLOADED_VERSION="${{ github.event.inputs.version }}"
+        UPLOADED_VERSION="$VERSION_INPUT"
         
         echo "🔍 Verifying installed versions match uploaded version..."
         echo "📋 Expected uploaded version: $UPLOADED_VERSION"
@@ -204,7 +209,7 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       with:
-        version: "0.12.0"
+        version: "0.12.23"
     
     - name: Set up Python
       run: uv python install 3.10  # Use minimum supported version for build
@@ -220,11 +225,13 @@ jobs:
     
     - name: Verify version consistency
       if: github.event_name == 'release'
+      env:
+        RELEASE_TAG: ${{ github.event.release.tag_name }}
       run: |
         echo "🔍 Verifying version consistency for release..."
-        
+
         # Extract release version from GitHub release tag
-        RELEASE_VERSION="${{ github.event.release.tag_name }}"
+        RELEASE_VERSION="$RELEASE_TAG"
         # Remove 'v' prefix if present (e.g., v1.0.5 -> 1.0.5)
         RELEASE_VERSION=${RELEASE_VERSION#v}
         
@@ -259,6 +266,8 @@ jobs:
       run: uv tool run twine upload dist/*
     
     - name: Verify publication with multiple installation methods
+      env:
+        RELEASE_TAG: ${{ github.event.release.tag_name }}
       run: |
         echo "🧪 Verifying PyPI publication with multiple package managers..."
         
@@ -293,7 +302,7 @@ jobs:
         echo "✅ uv installation verification passed (version: $UV_VERSION)"
         
         # Verify all installed versions match the release version
-        RELEASE_VERSION="${{ github.event.release.tag_name }}"
+        RELEASE_VERSION="$RELEASE_TAG"
         RELEASE_VERSION=${RELEASE_VERSION#v}  # Remove 'v' prefix if present
         
         echo "🔍 Verifying installed versions match release version..."

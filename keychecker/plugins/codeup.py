@@ -77,7 +77,7 @@ class CodeupProvider(BaseGitProvider):
         ):
             result["reachable"] = False
             result["error"] = (
-                f'Connection failed - {output.split()[0] if output else "unknown"}'
+                f"Connection failed - {output.split()[0] if output else 'unknown'}"
             )
         elif exit_code != 0:
             result["authenticated"] = False

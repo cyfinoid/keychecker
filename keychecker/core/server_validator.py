@@ -155,8 +155,15 @@ class ServerValidator:
         self, private_key_path: str, server_names: List[str]
     ) -> AsyncGenerator[tuple[str, Dict[str, Any]], None]:
         """
-        Validate SSH key against multiple servers using plugins,
+        Validate SSH key against multiple servers using plugins concurrently,
         yielding results as they complete.
+
+        Validations run in parallel, bounded by ``self.concurrency`` so a large
+        provider list (e.g. ``--validate all``) does not open an unbounded number
+        of SSH connections at once. Results are yielded in completion order — the
+        caller collects them into a dict keyed by server name, so ordering does
+        not matter. Progress bars are disabled by the CLI during validation, so
+        concurrent execution does not interleave terminal output.
 
         Args:
             private_key_path: Path to SSH private key
@@ -165,24 +172,38 @@ class ServerValidator:
         Yields:
             Tuple of (server_name, result) as each validation completes
         """
-        # Execute validations sequentially to avoid terminal output interference
-        for server_name in server_names:
-            if server_name.lower() in self.providers:
-                provider = self.providers[server_name.lower()]
+        semaphore = asyncio.Semaphore(max(1, self.concurrency))
 
+        async def _validate_one(name: str) -> tuple[str, Dict[str, Any]]:
+            provider = self.providers[name.lower()]
+            async with semaphore:
                 try:
                     result = await provider.validate_key(private_key_path)
-                    yield server_name, result
                 except Exception as e:
-                    yield server_name, {
+                    result = {
                         "reachable": False,
                         "error": str(e),
                         "username": None,
                         "authenticated": False,
                     }
+            return name, result
+
+        tasks = [
+            asyncio.create_task(_validate_one(server_name))
+            for server_name in server_names
+            if server_name.lower() in self.providers
+        ]
+
+        for completed in asyncio.as_completed(tasks):
+            server_name, result = await completed
+            yield server_name, result
 
     async def discover_organizations_only(
-        self, private_key_path: str, server_name: str
+        self,
+        private_key_path: str,
+        server_name: str,
+        manual_orgs: Optional[List[str]] = None,
+        discover_via_api: bool = True,
     ) -> Dict[str, Any]:
         """
         Discover organizations for the key owner without testing repositories.
@@ -190,6 +211,8 @@ class ServerValidator:
         Args:
             private_key_path: Path to SSH private key
             server_name: Name of the server to test against
+            manual_orgs: Org names supplied by the user (merged with discovery)
+            discover_via_api: When False, skip automatic org discovery
 
         Returns:
             Dictionary with organization discovery results
@@ -203,10 +226,17 @@ class ServerValidator:
         provider = self.providers[server_name.lower()]
 
         # Get organization discovery info from the provider
-        return await provider.discover_organizations_only(private_key_path)
+        return await provider.discover_organizations_only(
+            private_key_path, manual_orgs, discover_via_api
+        )
 
     async def discover_repositories(
-        self, private_key_path: str, server_name: str, wordlist_path: str
+        self,
+        private_key_path: str,
+        server_name: str,
+        wordlist_path: str,
+        manual_orgs: Optional[List[str]] = None,
+        discover_via_api: bool = True,
     ) -> Dict[str, Any]:
         """
         Discover private repositories accessible with the given key using plugins.
@@ -215,6 +245,8 @@ class ServerValidator:
             private_key_path: Path to SSH private key
             server_name: Server to discover repositories on
             wordlist_path: Path to wordlist file with candidate repository names
+            manual_orgs: Org names supplied by the user (merged with discovery)
+            discover_via_api: When False, skip automatic org discovery
 
         Returns:
             Dictionary with repository discovery results
@@ -235,7 +267,9 @@ class ServerValidator:
             raise FileNotFoundError(f"Wordlist not found: {wordlist_path}")
 
         # Use the provider's repository discovery method
-        return await provider.discover_repositories(private_key_path, repo_names)
+        return await provider.discover_repositories(
+            private_key_path, repo_names, manual_orgs, discover_via_api
+        )
 
     async def cleanup(self) -> None:
         """Clean up resources from all providers."""

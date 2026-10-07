@@ -4,14 +4,96 @@ Command-line interface for KeyChecker.
 
 import argparse
 import asyncio
+import csv
 import os
 import sys
-from typing import Any
+from typing import Any, List
 
 from keychecker.core.key_analyzer import SSHKeyAnalyzer
 from keychecker.core.server_validator import ServerValidator
 from keychecker.utils.output import OutputFormatter
 from keychecker import __version__
+
+# Full set of providers, in display order. `--validate all` expands to this.
+ALL_PROVIDERS = [
+    "github",
+    "gitlab",
+    "bitbucket",
+    "codeberg",
+    "gitea",
+    "huggingface",
+    "dataops",
+    "assembla",
+    "boltic",
+    "sourcehut",
+    "notabug",
+    "azuredevops",
+    "framagit",
+    "gitverse",
+    "launchpad",
+    "gitee",
+    "coding",
+    "codeup",
+    "gitflic",
+]
+
+# Providers validated when neither --validate nor --no-validate is given.
+DEFAULT_PROVIDERS = [
+    "github",
+    "gitlab",
+    "bitbucket",
+    "codeberg",
+    "gitea",
+    "huggingface",
+]
+
+# Keyword accepted by --validate to expand to ALL_PROVIDERS.
+ALL_KEYWORD = "all"
+
+
+def _parse_validate(value: str) -> List[str]:
+    """Parse a comma-separated ``--validate`` value into a list of providers.
+
+    Accepting a single (comma-separated) token instead of ``nargs="*"`` means
+    ``--validate`` never swallows the following ``key_file`` positional, so
+    ``keychecker --validate all <file>`` works regardless of argument order.
+    """
+    allowed = ALL_PROVIDERS + [ALL_KEYWORD]
+    providers = [p.strip() for p in value.split(",") if p.strip()]
+    if not providers:
+        raise argparse.ArgumentTypeError("no providers specified")
+    invalid = [p for p in providers if p not in allowed]
+    if invalid:
+        raise argparse.ArgumentTypeError(
+            "invalid provider(s): {}; choose from: {}".format(
+                ", ".join(invalid), ", ".join(allowed)
+            )
+        )
+    return providers
+
+
+def _normalize_orgs(org_values: Any) -> List[str]:
+    """Flatten ``--org`` values into a deduped, ordered list of org names.
+
+    ``--org`` uses ``action="append"`` and each value may itself be
+    comma-separated, so a single call site can accept both ``--org a --org b``
+    and ``--org a,b``.
+    """
+    orgs: List[str] = []
+    seen = set()
+    for value in org_values or []:
+        for org in value.split(","):
+            org = org.strip()
+            if org and org not in seen:
+                seen.add(org)
+                orgs.append(org)
+    return orgs
+
+
+def _append_csv_row(csv_path: str, row: List[str]) -> None:
+    """Append a single CSV row to ``csv_path`` (created if missing)."""
+    with open(csv_path, "a", newline="") as f:
+        csv.writer(f).writerow(row)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -28,7 +110,10 @@ Examples:
   keychecker -i ~/.ssh/id_ed25519                   # Analyze key + validate all servers
   keychecker ~/.ssh/id_ed25519 --no-validate       # Analyze key only
   keychecker ~/.ssh/id_rsa --validate github       # Validate against GitHub only
+  keychecker --validate all ~/.ssh/id_rsa          # 'all' works before the key too
+  keychecker ~/.ssh/id_rsa --validate github,gitlab  # Comma-separate multiple servers
   keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
+  keychecker ~/.ssh/id_rsa --validate github --discovery repos.txt --org acme
   keychecker ~/.ssh/id_rsa --public-out public_key.pub
   keychecker --version                              # Show version information
 
@@ -54,33 +139,15 @@ Exit codes:
     # Validation and discovery options
     parser.add_argument(
         "--validate",
-        nargs="*",
-        choices=[
-            "github",
-            "gitlab",
-            "bitbucket",
-            "codeberg",
-            "gitea",
-            "huggingface",
-            "dataops",
-            "assembla",
-            "boltic",
-            "sourcehut",
-            "notabug",
-            "azuredevops",
-            "framagit",
-            "gitverse",
-            "launchpad",
-            "gitee",
-            "coding",
-            "codeup",
-            "gitflic",
-        ],
+        metavar="PROVIDERS",
+        type=_parse_validate,
         help=(
-            "One or more servers to validate against (default: core providers). "
+            "Comma-separated server(s) to validate against, e.g. 'github' or "
+            "'github,gitlab' (default: core providers). Use 'all' to validate "
+            "against every supported provider. "
             "Optional/regional providers: gitee(chinese), coding(chinese), "
             "codeup(chinese), gitflic(russian). "
-            "When used with --discover-repos, specifies which server to use for "
+            "When used with --discovery, specifies which server to use for "
             "repository discovery."
         ),
     )
@@ -97,6 +164,28 @@ Exit codes:
         help=(
             "File with candidate repository names (not usernames). When specified, "
             "enables repository discovery mode."
+        ),
+    )
+
+    parser.add_argument(
+        "--org",
+        metavar="ORG",
+        action="append",
+        help=(
+            "Organization name to target for repository discovery instead of "
+            "(or in addition to) API-discovered orgs. Repeatable and accepts "
+            "comma-separated values (e.g. --org acme --org foo,bar). By default "
+            "these are merged with auto-discovered orgs; pass --no-org-discovery "
+            "to use only the provided org(s). Requires --discovery."
+        ),
+    )
+
+    parser.add_argument(
+        "--no-org-discovery",
+        action="store_true",
+        help=(
+            "Skip automatic organization discovery and use only the org(s) given "
+            "with --org. Requires --org."
         ),
     )
 
@@ -117,6 +206,16 @@ Exit codes:
 
     # Output options
     parser.add_argument("--public-out", help="Save derived public key to file")
+
+    parser.add_argument(
+        "--csv",
+        metavar="FILE",
+        help=(
+            "Append a CSV summary row for this key to FILE. Columns: "
+            "key path, SHA256 fingerprint, then one 'provider:username' entry per "
+            "identified account, or a single 'N' if no username was found."
+        ),
+    )
 
     parser.add_argument(
         "--no-banner", action="store_true", help="Suppress banner output"
@@ -184,17 +283,14 @@ async def run_analysis(args: Any) -> int:
         if not args.no_validate:
             if args.validate is not None:
                 # User specified servers explicitly (could be empty list for none)
-                servers_to_validate = args.validate
+                if ALL_KEYWORD in args.validate:
+                    # 'all' expands to every supported provider
+                    servers_to_validate = list(ALL_PROVIDERS)
+                else:
+                    servers_to_validate = args.validate
             else:
-                # Default: validate against all supported servers
-                servers_to_validate = [
-                    "github",
-                    "gitlab",
-                    "bitbucket",
-                    "codeberg",
-                    "gitea",
-                    "huggingface",
-                ]
+                # Default: validate against the core providers
+                servers_to_validate = list(DEFAULT_PROVIDERS)
 
         # Validate against servers
         validation_results = None
@@ -235,6 +331,16 @@ async def run_analysis(args: Any) -> int:
         print("")
         sys.stdout.flush()
 
+        # Append a CSV summary row if requested
+        if args.csv:
+            fingerprint = analysis_result["public_key"].get("fingerprint_sha256") or ""
+            csv_row = formatter.build_csv_row(
+                args.input_file, fingerprint, validation_results or {}
+            )
+            _append_csv_row(args.csv, csv_row)
+            if args.verbose:
+                formatter.print_verbose(f"CSV summary row appended to: {args.csv}")
+
         # Run repository discovery if requested
         repo_discovery_results = None
         if args.discovery:
@@ -247,14 +353,23 @@ async def run_analysis(args: Any) -> int:
                 )
 
             target_server = args.validate[0]
+            manual_orgs = _normalize_orgs(args.org)
+            discover_via_api = not args.no_org_discovery
             if args.verbose:
                 formatter.print_verbose(
                     f"Running repository discovery against {target_server}"
                 )
+                if manual_orgs:
+                    formatter.print_verbose(
+                        "Using custom org(s): {} (API discovery {})".format(
+                            ", ".join(manual_orgs),
+                            "enabled" if discover_via_api else "disabled",
+                        )
+                    )
 
             # First, discover organizations and show them immediately
             org_discovery_info = await validator.discover_organizations_only(
-                args.input_file, target_server
+                args.input_file, target_server, manual_orgs, discover_via_api
             )
             if org_discovery_info:
                 org_output = formatter.format_organization_discovery(org_discovery_info)
@@ -263,7 +378,11 @@ async def run_analysis(args: Any) -> int:
 
             # Then run full repository discovery
             repo_discovery_results = await validator.discover_repositories(
-                args.input_file, target_server, args.discovery
+                args.input_file,
+                target_server,
+                args.discovery,
+                manual_orgs,
+                discover_via_api,
             )
 
             # Add a clear line after progress bars before showing results
@@ -354,10 +473,14 @@ def validate_args(args: Any) -> None:
 
     # Validate repository discovery arguments
     if args.discovery:
-        if not args.validate or len(args.validate) != 1:
+        if (
+            not args.validate
+            or len(args.validate) != 1
+            or args.validate == [ALL_KEYWORD]
+        ):
             print(
-                "❌ Error: Repository discovery requires exactly one server specified "
-                "with --validate",
+                "❌ Error: Repository discovery requires exactly one concrete server "
+                "specified with --validate (not 'all')",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -366,6 +489,22 @@ def validate_args(args: Any) -> None:
                 f"❌ Error: Discovery file not found: {args.discovery}", file=sys.stderr
             )
             sys.exit(1)
+
+    # Validate custom-org options: they only apply to repository discovery.
+    if (args.org or args.no_org_discovery) and not args.discovery:
+        print(
+            "❌ Error: --org/--no-org-discovery only apply to repository discovery "
+            "and require --discovery",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if args.no_org_discovery and not args.org:
+        print(
+            "❌ Error: --no-org-discovery requires at least one --org value",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # Validate argument combinations
     if args.validate is not None and args.no_validate:

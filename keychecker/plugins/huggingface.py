@@ -91,7 +91,7 @@ class HuggingFaceProvider(BaseGitProvider):
             result["reachable"] = False
             result["error"] = (
                 f"Connection failed - "
-                f'{output.split()[0] if output else "unknown error"}'
+                f"{output.split()[0] if output else 'unknown error'}"
             )
         elif exit_code != 0:
             result["authenticated"] = False

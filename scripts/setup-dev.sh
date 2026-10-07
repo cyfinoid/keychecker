@@ -97,7 +97,7 @@ uv run pytest -v
 
 # Run linting
 echo "🔍 Running linting..."
-uv run flake8 keychecker/ tests/
+uv run ruff check keychecker/ tests/
 
 # Run type checking
 echo "🔍 Running type checking..."
@@ -128,8 +128,8 @@ echo "   - ./scripts/publish-pypi.sh   - Publish to PyPI"
 echo ""
 echo "🚀 uv Commands:"
 echo "   - uv run pytest               - Run tests"
-echo "   - uv run black .              - Format code"
-echo "   - uv run flake8 .             - Lint code"
+echo "   - uv run ruff format keychecker/ tests/ - Format code"
+echo "   - uv run ruff check keychecker/ tests/  - Lint code"
 echo "   - uv run mypy .               - Type check"
 echo "   - uv add <package>            - Add new dependency"
 echo "   - uv sync                     - Sync dependencies"

@@ -47,13 +47,13 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
 fi
 
 echo "🔍 Running code formatting check..."
-uv run black --check --diff . || {
-    echo "❌ Code formatting issues found. Run 'uv run black .' to fix them."
+uv run ruff format --check --diff keychecker/ tests/ || {
+    echo "❌ Code formatting issues found. Run 'uv run ruff format keychecker/ tests/' to fix them."
     exit 1
 }
 
 echo "🔍 Running linting..."
-uv run flake8 keychecker/ tests/ || {
+uv run ruff check keychecker/ tests/ || {
     echo "❌ Linting issues found."
     exit 1
 }

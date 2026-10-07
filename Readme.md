@@ -21,7 +21,10 @@ _A fast CLI tool to fingerprint SSH private keys and identify which Git hosting 
 - **Multi-provider support**: GitHub, GitLab, Bitbucket, Codeberg, Gitea, Hugging Face
 - **Safe SSH handshakes**: Read-only validation without triggering repo operations
 - **Username extraction**: Parses SSH identity banners to recover mapped usernames
-- **Organization discovery**: Identifies user membership in organizations (GitHub API)
+- **Organization discovery**: Identifies user membership in organizations (GitHub API),
+  or target a known org directly with `--org` / `--no-org-discovery`
+- **Parallel validation**: `--validate all` and multi-provider checks run
+  concurrently (bounded by `--concurrency`)
 
 ### 📁 Repository Discovery
 - **Private repo detection**: Uses `git ls-remote` probes with wordlists
@@ -31,6 +34,7 @@ _A fast CLI tool to fingerprint SSH private keys and identify which Git hosting 
 
 ### 📊 Output Modes
 - **Human-readable tables**: Clean, formatted output by default
+- **CSV summary**: `--csv FILE` appends one machine-readable row per key
 - **Exit codes**: Automation-friendly return codes
 - **Verbose logging**: Debug and trace information
 - **Public key export**: Save derived public keys to files
@@ -64,14 +68,33 @@ cd keychecker
 # Analyze a private key and Validate against servers (default behavior)
 keychecker ~/.ssh/id_ed25519
 
-# Validate against specific servers only
-keychecker ~/.ssh/id_ed25519 --validate github gitlab bitbucket codeberg gitea huggingface
+# Validate against specific servers only (comma-separated, no spaces)
+keychecker ~/.ssh/id_ed25519 --validate github,gitlab,bitbucket,codeberg,gitea,huggingface
 
 # Validate against specific servers only
-keychecker ~/.ssh/id_rsa --validate github gitlab huggingface
+keychecker ~/.ssh/id_rsa --validate github,gitlab,huggingface
+
+# Validate against every supported provider (all 19) — order doesn't matter
+keychecker ~/.ssh/id_ed25519 --validate all
+keychecker --validate all ~/.ssh/id_ed25519
+
+# Append a CSV summary row (key path, fingerprint, provider:username / N)
+keychecker ~/.ssh/id_ed25519 --validate all --csv results.csv
 
 # Skip server validation (local analysis only)
 keychecker ~/.ssh/id_ed25519 --no-validate
+```
+
+The `--csv` file grows by one row per run, so it composes with a shell loop to
+scan a directory of keys into a single sheet:
+
+```bash
+for key in ~/keys/*; do
+  keychecker "$key" --validate all --csv results.csv --no-banner --no-progress
+done
+# results.csv:
+#   ~/keys/id_ed25519,SHA256:M7vOmp...,github:anantshri,gitlab:anant
+#   ~/keys/id_rsa,SHA256:DE8Kf...,N
 ```
 
 ### Repository Discovery
@@ -89,6 +112,12 @@ keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt
 
 # Or pass token directly
 keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt --github-token ghp_your_token_here
+
+# Target a known org (merged with auto-discovered orgs)
+keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt --org acme
+
+# Only test the given org(s); skip automatic org discovery
+keychecker ~/.ssh/id_rsa --validate github --discovery repo_names.txt --org acme --no-org-discovery
 ```
 
 ---
@@ -106,20 +135,36 @@ Positional Arguments:
 Options:
   -i, --input PATH      Path to private key file (alternative to positional)
   
-  --validate SERVERS    One or more servers to validate against
-                        Choices: github, gitlab, bitbucket, codeberg, gitea, huggingface
+  --validate PROVIDERS  Comma-separated server(s) to validate against, e.g.
+                        "github" or "github,gitlab" (default: the six core
+                        providers). Use "all" for every provider.
+                        Choices: github, gitlab, bitbucket, codeberg, gitea,
+                        huggingface, dataops, assembla, boltic, sourcehut,
+                        notabug, azuredevops, framagit, gitverse, launchpad,
+                        gitee, coding, codeup, gitflic, all
   --no-validate         Skip server validation (local analysis only)
   
   --discovery FILE      Enable repository discovery with wordlist file
+                        (requires exactly one concrete --validate server)
+  --org ORG             Custom organization name to target during repository
+                        discovery, merged with API-discovered orgs. Repeatable
+                        and comma-separated (e.g. --org acme --org foo,bar).
+                        Requires --discovery.
+  --no-org-discovery    Skip automatic org discovery; test only the org(s)
+                        given with --org (requires --org)
   
   --github-token TOKEN  GitHub API token for enhanced organization discovery
   --no-progress         Disable progress bars during repository discovery
   
   --public-out FILE     Save derived public key to file
+  --csv FILE            Append a CSV summary row for the key: key path,
+                        SHA256 fingerprint, then one "provider:username" per
+                        identified account, or a single "N" if none found
   --no-banner           Suppress banner output
   
   --timeout SECONDS     Per-connection timeout (default: 5)
-  --concurrency N       Parallel connections (default: 10)
+  --concurrency N       Max parallel connections; also bounds concurrent
+                        multi-provider validation (default: 10)
   
   -v, --verbose         Enable debug/trace logs
   -V, --version         Show version number and exit
@@ -137,6 +182,9 @@ keychecker ~/.ssh/id_rsa --validate github
 
 # Validate against Hugging Face only
 keychecker ~/.ssh/id_rsa --validate huggingface
+
+# Validate against every supported provider and record a CSV row
+keychecker ~/.ssh/id_rsa --validate all --csv results.csv
 
 # Discover repositories with custom wordlist
 keychecker ~/.ssh/id_rsa --validate github --discovery my_repos.txt

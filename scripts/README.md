@@ -102,8 +102,8 @@ Runs all tests and quality checks using `uv` for fast execution.
 ```
 
 **What it does:**
-- Runs code formatting check with black
-- Runs flake8 linting
+- Runs code formatting check with ruff format
+- Runs ruff linting
 - Runs mypy type checking
 - Runs pytest with coverage
 - Runs security checks with bandit and pip-audit (skips editable packages)
@@ -179,7 +179,7 @@ export PYPI_API_TOKEN=your_token_here
 
 - Python 3.10+
 - uv (install with: `./scripts/install.sh`)
-  - Version: 0.11.32 (pinned with cryptographic hashes in `requirements-uv.txt`)
+  - Version: 0.12.23 (pinned with cryptographic hashes in `requirements-uv.txt`)
 
 ### Environment Variables
 For publishing scripts, you need to set these environment variables:
@@ -252,10 +252,10 @@ Once you have uv set up, you can use these commands directly:
 uv run pytest
 
 # Format code
-uv run black .
+uv run ruff format keychecker/ tests/
 
 # Lint code
-uv run flake8 .
+uv run ruff check keychecker/ tests/
 
 # Type check
 uv run mypy .
