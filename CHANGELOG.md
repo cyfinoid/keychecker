@@ -12,6 +12,20 @@ right heading. Record the blow-by-blow detail (commands, diffs, reasoning) in
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.6.0] - 2026-10-06
+
+### Added
+
 - Library deprecation warnings (e.g. cryptography's "SSH DSA key support is
   deprecated") are now consumed during key analysis and surfaced as ⚠️ lines
   in the output instead of leaking to stderr as raw Python warnings
