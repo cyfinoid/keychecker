@@ -9,6 +9,39 @@ below; drop sections that genuinely don't apply.
 
 ---
 
+## 2026-10-06 — Release prep: 1.5.0
+
+**Summary:** Version bumped 1.1.0 → 1.5.0 for release; CHANGELOG's
+`[Unreleased]` block promoted to `[1.5.0] - 2026-10-06` (fresh empty
+`[Unreleased]` skeleton left on top). No code changes; tag and GitHub
+release left to the maintainer.
+
+**How:**
+- `pyproject.toml` and `keychecker/__init__.py` → 1.5.0 (the two places
+  `publish.yml` cross-checks against the release tag; `scripts/version.sh`
+  does the same pair but requires a uv ≥0.12 on PATH, so the edit was made
+  directly and `uv build` run in a scratch copy instead).
+- `uv.lock`: keychecker entry 1.1.0 → 1.5.0 (re-locked with
+  `--exclude-newer 2026-09-29T00:00:00Z`, `[options]` P7D block restored
+  verbatim; revision 3 kept; only the project's own version line changed).
+- `sbom/code.*.json`: regenerated via `scripts/ci/aidc-sbom-all.sh` in a
+  clean synced copy (SBOMs embedded the old 1.1.0).
+
+**Verification (in a scratch copy of the release tree):**
+- `uv sync --all-extras` + full suite: 63/63 passed; ruff clean.
+- `python -m keychecker.cli --version` → `keychecker 1.5.0`.
+- `uv build` produced `dist/keychecker-1.5.0.tar.gz` + wheel;
+  `uv tool run twine check dist/*` → PASSED for both artifacts.
+
+**Notes:**
+- Release tag must be `v1.5.0` — the workflow strips the leading `v` and
+  requires it to equal pyproject and `__init__` versions.
+- Publishing is automatic on GitHub release publish (`on: release: types:
+  [published]` → production PyPI); TestPyPI dry-run available via
+  workflow_dispatch with a version input (requires `TESTPYPI_API_TOKEN`).
+
+---
+
 ## 2026-10-06 — Close pip-audit findings: multidict 6.9.1 + urllib3 2.8.0
 
 **Summary:** `pip-audit` over the locked dependency set (`uv export` →
